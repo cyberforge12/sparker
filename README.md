@@ -9,3 +9,5 @@ inserting - default user (postgres)
 Main class - src\main\scala\Main 
 
 first build - then run
+
+table config - WebService.scala bottom of the file
