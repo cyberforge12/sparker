@@ -1,0 +1,91 @@
+{
+  "name": "event_ext_fact",
+  "type": "record",
+  "fields": 
+  [
+    {
+      "name": "event_id",
+      "type": "string"
+    },
+    {
+      "name": "event_time",
+      "type": "long"
+    },
+    {
+      "name": "event_channel",
+      "type": "string"
+    },
+    {
+      "name": "sub_channel",
+      "type": "string"
+    },
+    {
+      "name": "event_type",
+      "type": "string"
+    },
+    {
+      "name": "sub_type",
+      "type": "string"
+    },
+    {
+      "name": "event_description",
+      "type": "string"
+    },
+    {
+      "name": "transaction_amount",
+      "type": "long"
+    },
+    {
+      "name": "transaction_sender_account_number",
+      "type": "string"
+    },
+    {
+      "name": "transaction_beneficiar_account_number",
+      "type": "string"
+    },
+    {
+      "name": "ccaf_dt_load",
+      "type": "string"
+    },
+    {
+      "name": "event_dt",
+      "type": "string"
+    },
+    {
+      "name": "issue_date_card_owner",
+      "type": "string"
+    },
+    {
+      "name": "number_dul",
+      "type": "string"
+    },
+    {
+      "name": "account_number_of_recipient",
+      "type": "string"
+    },
+    {
+      "name": "number_card_recepient",
+      "type": "string"
+    },
+    {
+      "name": "payer_card_number",
+      "type": "string"
+    },
+    {
+      "name": "recepient_bik",
+      "type": "string"
+    },
+    {
+      "name": "recepient_inn",
+      "type": "string"
+    },
+    {
+      "name": "recepient_fio",
+      "type": "string"
+    },
+    {
+      "name": "client_phone_number",
+      "type": "string"
+    }
+  ]
+}

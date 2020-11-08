@@ -1,0 +1,61 @@
+# проверки полей по файлам event/ext_fact: valueset - значение должно быть одно из набора; match - значение соответствует регулярному выражению; nullable - false означает, что поле обязательно (по умолчанию true)
+validate:
+  event:
+    event_id:
+      match: "[a-z0-9]{24,26}"
+      nullable: false
+    event_time:
+      match: "\d{13}"
+      nullable: false
+    event_channel:
+      match: "[A-Z]+"
+      nullable: false
+      valueset: [ "WEB", "MOBILE", "BRANCH", "SMS", "WEBKIOSK" ]
+    sub_channel:
+      match: "[A-Z]+"
+      nullable: false
+      valueset: [ "WEBAPI", "MOBILEAPI", "ASFS.BRANCHAPI", "MBK", "ATMAPI" ]
+    event_type:
+      match: "[A-Z]+"
+      nullable: false
+      valueset: [ "PAYMENT", "WITHDRAW" ]
+    sub_type:
+      match: "[A-Z]+"
+      nullable: false
+      valueset: [ "RURPAYMENT", "RURPAYJURSB", "CASH", "MB_CARD_TO_CARD" ]
+    transaction_amount:
+      match: "\d+"
+      nullable: false
+    transaction_sender_account_number:
+      match: "[X0-9]{16,20}"
+      nullable: false
+    transaction_beneficiar_account_number:
+      match: "[X0-9]{16,20}"
+      nullable: false
+    ccaf_dt_load:
+      match: "\d{8}"
+      nullable: false
+    event_dt:
+      match: "\d{8}"
+      nullable: false
+  ext_fact:
+    number_card_recepient:
+      match: "[X0-9]{16,20}"
+    payer_card_number:
+      match: "[X0-9]{16,20}"
+    recepient_bik:
+      match: "\d{8}"
+    recepient_inn:
+      match: "\d{11}"
+    recepient_fio:
+      match: "[а-яА-Я\s]+"
+    client_phone_number:
+      match: "\d+"
+    ccaf_dt_load:
+      match: "\d{8}"
+      nullable: false
+    event_dt:
+      match: "\d{8}"
+      nullable: false
+    issue_date_card_owner:
+      match: "\d{2}.\d{2}.\d{4}\s+\d{1,2}:\d{2}:\d{2}"
