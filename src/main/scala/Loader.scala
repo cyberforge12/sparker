@@ -1,10 +1,12 @@
 import io.circe.ParsingFailure
 import javax.annotation.Nonnegative.Checker
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.execution.datasources.parquet.ParquetUtils.FileTypes
 import org.apache.spark.sql.types.{DataType, StructType}
 
 import scala.collection.mutable
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 import scala.util.parsing.json.JSONArray
 
 object Loader {
@@ -18,7 +20,7 @@ object Loader {
 
   def parseArgs (args: Array[String]) = {
     var pair = scala.collection.mutable.Map("" -> "")
-    var lst = args.map(_.split("="))
+    val lst = args.map(_.split("="))
     for (i <- lst) {
       if (i.length == 2) {
         i(0) match {
@@ -59,24 +61,24 @@ object Loader {
       sys.exit(1)
     }
     val valid_map = ConfigParser.parseFile(validate)
-
+    
     val schemaSource = Source.fromFile("schema.json").getLines().mkString
     val spark = SparkSession
       .builder()
       .appName("Java Spark SQL basic example")
       .config("spark.master", "local")
       .getOrCreate();
-    val events_df = spark.read.format("csv")
+    val df_reader = spark.read.format("csv")
       .option("sep", ";")
       .option("inferSchema", "true")
       .option("header", "true")
-      .load(events)
-    val facts_df = spark.read.format("csv")
-      .option("sep", ";")
-      .option("inferSchema", "true")
-      .option("header", "true")
-      .load(facts)
-    facts_df.printSchema()
-    DfValidator.validate(facts_df)
+    Try(df_reader.load(events)) match {
+      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_events)
+      case Failure(exception) => ErrorHandler.error(exception)
+    }
+    Try(df_reader.load(facts)) match {
+      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts)
+      case Failure(exception) => ErrorHandler.error(exception)
+    }
   }
 }
