@@ -1,3 +1,8 @@
+package com.target.loader
+
+import java.util.Properties
+
+import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.sql.SparkSession
 
 import scala.util.{Failure, Success, Try}
@@ -11,7 +16,8 @@ object Loader extends LazyLogging {
   var retry: Int = -1
   var timeout: Int = -1
 
-  def parseArgs (args: Array[String]): Unit = {
+  def parseArgs(args: Array[String]): Unit = {
+
     logger.info("Parsing CLI arguments")
     val lst = args.map(_.split("="))
     for (i <- lst) {
@@ -33,7 +39,8 @@ object Loader extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
 
-    val usage = """
+    val usage =
+      """
     Usage: Logger.jar args
 
         args (key=value ...):
@@ -54,10 +61,10 @@ object Loader extends LazyLogging {
       sys.exit(1)
     }
     val valid_map = ConfigParser.parseFile(validate)
-    
+
     val spark = SparkSession
       .builder()
-      .appName("Java Spark SQL basic example")
+      .appName("Loader")
       .config("spark.master", "local")
       .getOrCreate()
     val df_reader = spark.read.format("csv")

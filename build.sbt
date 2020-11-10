@@ -1,4 +1,5 @@
-name := "loader_sbt"
+name := "com/target/loader"
+organization := "com.target"
 
 version := "0.1"
 
@@ -15,7 +16,10 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-yaml" % "0.9.0" withSources(),
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion,
   "org.yaml" % "snakeyaml" % "1.27",
   "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
-  "org.apache.logging.log4j" % "log4j-core" % "2.13.3"
+  "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
+  "com.lihaoyi" %% "scalatags" % "0.6.7",
+  "com.sun.mail" % "javax.mail" % "1.6.2",
 )
