@@ -1,7 +1,6 @@
 import io.circe.ParsingFailure
 import javax.annotation.Nonnegative.Checker
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.execution.datasources.parquet.ParquetUtils.FileTypes
 import org.apache.spark.sql.types.{DataType, StructType}
 
 import scala.collection.mutable
@@ -9,7 +8,7 @@ import scala.io.Source
 import scala.util.{Failure, Success, Try}
 import scala.util.parsing.json.JSONArray
 
-object Loader {
+object Loader extends LazyLogging {
 
   var facts: String = ""
   var events: String = ""
@@ -18,8 +17,8 @@ object Loader {
   var retry: Int = -1
   var timeout: Int = -1
 
-  def parseArgs (args: Array[String]) = {
-    var pair = scala.collection.mutable.Map("" -> "")
+  def parseArgs (args: Array[String]): Unit = {
+    logger.info("Parsing CLI arguments")
     val lst = args.map(_.split("="))
     for (i <- lst) {
       if (i.length == 2) {
@@ -30,12 +29,11 @@ object Loader {
           case "API" => api = i(1)
           case "retry" => retry = i(1).toInt
           case "timeout" => timeout = i(1).toInt
-          case _ => println("Incorrect option: " + i(0)); sys.exit(1)
+          case _ => ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
         }
-        println(i(0).toString + "===" + i(1).toString)
       }
       else
-        println("Incorrect option: " + i(0).toString)
+        ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
     }
   }
 
@@ -54,6 +52,7 @@ object Loader {
   """
 
     if (args.length == 6) {
+      logger.info("Running Loader")
       parseArgs(args)
     }
     else {
@@ -62,22 +61,21 @@ object Loader {
     }
     val valid_map = ConfigParser.parseFile(validate)
     
-    val schemaSource = Source.fromFile("schema.json").getLines().mkString
     val spark = SparkSession
       .builder()
       .appName("Java Spark SQL basic example")
       .config("spark.master", "local")
-      .getOrCreate();
+      .getOrCreate()
     val df_reader = spark.read.format("csv")
       .option("sep", ";")
       .option("inferSchema", "true")
       .option("header", "true")
     Try(df_reader.load(events)) match {
-      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_events)
+      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_events, valid_map)
       case Failure(exception) => ErrorHandler.error(exception)
     }
     Try(df_reader.load(facts)) match {
-      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts)
+      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts, valid_map)
       case Failure(exception) => ErrorHandler.error(exception)
     }
   }
