@@ -1,12 +1,6 @@
-import io.circe.ParsingFailure
-import javax.annotation.Nonnegative.Checker
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{DataType, StructType}
 
-import scala.collection.mutable
-import scala.io.Source
 import scala.util.{Failure, Success, Try}
-import scala.util.parsing.json.JSONArray
 
 object Loader extends LazyLogging {
 

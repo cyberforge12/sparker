@@ -1,7 +1,5 @@
 object Globals {
 
-
-
   object FileTypesEnum extends Enumeration {
 
     type FileTypesEnum = Value
