@@ -1,9 +1,5 @@
 import java.util
 
-import cats.syntax.functor._
-import io.circe._
-import io.circe.generic.auto._
-import io.circe.yaml.parser
 import org.yaml.snakeyaml.Yaml
 
 import scala.io.{BufferedSource, Source}
