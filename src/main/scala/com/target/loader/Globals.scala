@@ -2,6 +2,9 @@ package com.target.loader
 
 object Globals {
 
+  val eventTable = "event"
+  val factsTable = "ext_fact"
+
   object FileTypesEnum extends Enumeration {
 
     type FileTypesEnum = Value
