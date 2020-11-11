@@ -60,7 +60,7 @@ object Loader extends LazyLogging {
       print(usage)
       sys.exit(1)
     }
-    val valid_map = ConfigParser.parseFile(validate)
+    val valid_map = new ConfigParser(validate)
 
     val spark = SparkSession
       .builder()
@@ -72,11 +72,13 @@ object Loader extends LazyLogging {
       .option("inferSchema", "true")
       .option("header", "true")
     Try(df_reader.load(events)) match {
-      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_events, valid_map)
+      case Success(value) => value
+//        DataframeValidator.validate(value, Globals.FileTypesEnum.e_events, valid_map)
       case Failure(exception) => ErrorHandler.error(exception)
     }
     Try(df_reader.load(facts)) match {
-      case Success(value) => DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts, valid_map)
+      case Success(value) => value
+//        DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts, valid_map)
       case Failure(exception) => ErrorHandler.error(exception)
     }
   }
