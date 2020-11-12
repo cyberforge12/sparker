@@ -22,6 +22,7 @@ class ConfigParser (filename: String) extends LazyLogging {
   val eventKeyColumns: Set[String] = getKeyColumns(Globals.eventTable)
   val factsKeyColumns: Set[String] = getKeyColumns(Globals.factsTable)
   var eventsNullable = getNullable(Globals.eventTable)
+  val circeADT = new CirceParserADT(fixYaml(loadFromFile(filename)), this)
   val circe = new CirceParser(fixYaml(loadFromFile(filename)))
 
   def getNullable(table: String) = {

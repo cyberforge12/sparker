@@ -1,6 +1,8 @@
 name := "com/target/loader"
 organization := "com.target"
 
+autoCompilerPlugins := true
+
 version := "0.1"
 
 scalaVersion := "2.11.12"
@@ -23,4 +25,7 @@ libraryDependencies ++= Seq(
   "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
   "com.lihaoyi" %% "scalatags" % "0.6.7",
   "com.sun.mail" % "javax.mail" % "1.6.2",
+  "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full,
 )
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
