@@ -1,13 +1,9 @@
 package com.target.loader
-import java.time.Instant
 
 import cats.syntax.either._
-import com.google.common.collect.Tables
-import io.circe.Decoder.Result
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.yaml
-import org.yaml.snakeyaml.Yaml
 
 import scala.util.{Failure, Success, Try}
 
@@ -65,17 +61,19 @@ validate:
       - World
 """)
 
-  val validator = json_test
-    .leftMap(err => err: Error)
-    .flatMap(_.as[Data])
-    .valueOr(throw _)
+  def validate_test = {
+    json_test
+      .leftMap(err => err: Error)
+      .flatMap(_.as[Data])
+      .valueOr(throw _)
+  }
 
-  println(validator)
-
-  val validator2 = json
-    .leftMap(err => err: Error)
-    .flatMap(_.as[Starter])
-    .valueOr(throw _)
+  def validate = {
+    json
+      .leftMap(err => err: Error)
+      .flatMap(_.as[Starter])
+      .valueOr(throw _)
+  }
 
   case class Nested(one: String, two: BigDecimal)
   case class Foo(foo: String, bar: Nested, baz: List[String])
