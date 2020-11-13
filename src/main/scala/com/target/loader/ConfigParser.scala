@@ -14,16 +14,13 @@ import scala.util.{Failure, Success, Try}
 import scala.collection.mutable._
 import scala.collection.JavaConversions._
 
-
-
-
 class ConfigParser (filename: String) extends LazyLogging {
   val configMap: java.util.LinkedHashMap[String, String] = parseToLinkedHashMap(filename)
   val eventKeyColumns: Set[String] = getKeyColumns(Globals.eventTable)
   val factsKeyColumns: Set[String] = getKeyColumns(Globals.factsTable)
   var eventsNullable = getNullable(Globals.eventTable)
-  val circeADT = new CirceParserADT(fixYaml(loadFromFile(filename)), this)
-  val circe = new CirceParser(fixYaml(loadFromFile(filename)))
+  val circeADT = new CirceParser(fixYaml(loadFromFile(filename)), this)
+  val value = circeADT.value.tables
 
   def getNullable(table: String) = {
     val tableMap = configMap("validate")
