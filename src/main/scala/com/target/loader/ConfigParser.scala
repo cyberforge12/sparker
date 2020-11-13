@@ -30,10 +30,12 @@ class ConfigParser (filename: String) extends LazyLogging {
       .asInstanceOf[java.util.LinkedHashMap[String, String]]
       .get(table).asInstanceOf[java.util.LinkedHashMap[String, String]]
 
+/*
     for (i <- eventKeyColumns) {
       println(i)
       println(tableMap.entrySet())
     }
+*/
 
   }
 
