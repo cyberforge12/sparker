@@ -7,9 +7,9 @@ class Encoder(df: DataFrame) {
   val columns: Seq[String] = Globals.columnsForJson.filter(dfColumns)
   private val df1 = df.select(columns.head, columns.tail: _*)
 
-  send(df1)
+  toJson(df1)
 
-  private def send(df: DataFrame) = {
+  private def toJson(df: DataFrame) = {
     df
       .repartition(1)
       .write.format("json")
