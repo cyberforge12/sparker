@@ -72,7 +72,7 @@ object Loader extends LazyLogging {
       .option("inferSchema", "true")
       .option("header", "true")
     Try(df_reader.load(events)) match {
-      case Success(value) => value
+      case Success(value) => new Encoder(value)
 //        DataframeValidator.validate(value, Globals.FileTypesEnum.e_events, valid_map)
       case Failure(exception) => ErrorHandler.error(exception)
     }
