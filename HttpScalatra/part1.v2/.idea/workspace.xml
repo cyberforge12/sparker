@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="BspLocalSettings">
+    <option name="projectSyncType">
+      <map>
+        <entry key="$USER_HOME$/Documents/example" value="PREVIEW" />
+        <entry key="$USER_HOME$/Downloads/example" value="PREVIEW" />
+      </map>
+    </option>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="eec5adcf-6f89-4157-adb5-3e311a00c6a1" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="1" />
+  </component>
+  <component name="ProjectId" id="1kCBFNEt7kTqTNhShclK89ddxJZ" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+  </component>
+  <component name="RunManager">
+    <configuration name="Main" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="ScSpark" />
+      <module name="part1.v2" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="WindowStateProjectService">
+    <state x="113" y="122" width="1071" height="778" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1605261026933">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="113" y="122" width="1071" height="778" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1440.900@0.0.1440.900" timestamp="1605261026933" />
+    <state x="457" y="256" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1605261023113">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="457" y="256" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1440.900@0.0.1440.900" timestamp="1605261023113" />
+    <state width="1398" height="245" key="GridCell.Tab.0.bottom" timestamp="1605354478951">
+      <screen x="0" y="25" width="1440" height="801" />
+    </state>
+    <state width="1398" height="245" key="GridCell.Tab.0.bottom/0.0.1440.900@0.0.1440.900" timestamp="1605353510471" />
+    <state width="1398" height="245" key="GridCell.Tab.0.bottom/0.25.1440.801@0.25.1440.801" timestamp="1605354478951" />
+    <state width="1398" height="245" key="GridCell.Tab.0.center" timestamp="1605354478949">
+      <screen x="0" y="25" width="1440" height="801" />
+    </state>
+    <state width="1398" height="245" key="GridCell.Tab.0.center/0.0.1440.900@0.0.1440.900" timestamp="1605353510470" />
+    <state width="1398" height="245" key="GridCell.Tab.0.center/0.25.1440.801@0.25.1440.801" timestamp="1605354478949" />
+    <state width="1398" height="245" key="GridCell.Tab.0.left" timestamp="1605354478948">
+      <screen x="0" y="25" width="1440" height="801" />
+    </state>
+    <state width="1398" height="245" key="GridCell.Tab.0.left/0.0.1440.900@0.0.1440.900" timestamp="1605353510469" />
+    <state width="1398" height="245" key="GridCell.Tab.0.left/0.25.1440.801@0.25.1440.801" timestamp="1605354478948" />
+    <state width="1398" height="245" key="GridCell.Tab.0.right" timestamp="1605354478950">
+      <screen x="0" y="25" width="1440" height="801" />
+    </state>
+    <state width="1398" height="245" key="GridCell.Tab.0.right/0.0.1440.900@0.0.1440.900" timestamp="1605353510471" />
+    <state width="1398" height="245" key="GridCell.Tab.0.right/0.25.1440.801@0.25.1440.801" timestamp="1605354478950" />
+    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup" timestamp="1605266824681">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup/0.0.1440.900@0.0.1440.900" timestamp="1605266824681" />
+  </component>
+</project>
