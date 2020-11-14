@@ -26,7 +26,7 @@ object Loader extends LazyLogging {
           case "facts" => facts = i(1)
           case "events" => events = i(1)
           case "validate" => validate = i(1)
-          case "API" => api = i(1)
+          case "API" => api = "http://" + i(1)
           case "retry" => retry = i(1).toInt
           case "timeout" => timeout = i(1).toInt
           case _ => ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
@@ -81,5 +81,6 @@ object Loader extends LazyLogging {
 //        DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts, valid_map)
       case Failure(exception) => ErrorHandler.error(exception)
     }
+    Sender.send("111")
   }
 }
