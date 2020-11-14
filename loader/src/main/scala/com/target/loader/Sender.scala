@@ -24,7 +24,7 @@ object Sender extends LazyLogging {
     Try(client.execute(post)) match {
       case Success(value) => logger.info("POST Success. " +
         "--- HEADERS ---" +
-        value.getAllHeaders.toString)
+        value.getAllHeaders.foreach(arg => arg.toString))
       case Failure(exception) => logger.error("POST Error: " + exception.getMessage)
     }
   }

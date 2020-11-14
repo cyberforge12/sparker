@@ -1,7 +1,4 @@
-package com.target.loader
-
 import org.apache.logging.log4j.{LogManager, Logger}
-
 
 trait LazyLogging {
 
