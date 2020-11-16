@@ -71,9 +71,11 @@ object Loader extends LazyLogging {
       .option("sep", ";")
       .option("inferSchema", "true")
       .option("header", "true")
-    var df1: DataFrame = ???
-    var df2: DataFrame = ???
-    var resFrame: DataFrame = ???
+    //Надо завести
+    var df1: DataFrame = spark.emptyDataFrame
+    var df2: DataFrame = spark.emptyDataFrame
+    var resFrame: DataFrame = spark.emptyDataFrame
+    //А как - хз
     try {
       df1 = DataframeValidator.validateEvents(df_reader.load(events))
     }
