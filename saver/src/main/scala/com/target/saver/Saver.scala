@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 object Saver extends App with LazyLogging {
 
   var conn_str: String = ""
-  var scheme: String = ""
+  var schema: String = ""
   var table: String = ""
   val usage =
     """
@@ -14,13 +14,16 @@ object Saver extends App with LazyLogging {
 
         args (key=value ...):
           dbh       database connection string, including login/passwd
-          scheme    path to AVRO-scheme file
+          schema    path to AVRO-scheme file
           table     POSTGRES table name containing messages
   """
 
   if (args.length == 3) {
     logger.info("Running Saver")
     parseArgs(args)
+
+    val avroSchema = new SchemaParser(schema).schema
+
     val spark = SparkSession
       .builder()
       .appName("Saver")
@@ -53,7 +56,7 @@ object Saver extends App with LazyLogging {
       if (i.length == 2) {
         i(0) match {
           case "dbh" => conn_str = i(1)
-          case "scheme" => scheme = i(1)
+          case "schema" => schema = i(1)
           case "table" => table = i(1)
           case _ => ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
         }
@@ -61,6 +64,6 @@ object Saver extends App with LazyLogging {
       else
         ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
     }
-    logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + scheme + ", table=" + table)
+    logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + schema + ", table=" + table)
   }
 }

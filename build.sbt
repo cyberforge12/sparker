@@ -60,6 +60,10 @@ lazy val daver = (project in file("saver"))
       "org.apache.logging.log4j" % "log4j-web" % "2.13.3",
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql" % sparkVersion,
+      "io.circe" %% "circe-core" % circeVersion withSources(),
+      "io.circe" %% "circe-generic" % circeVersion withSources(),
+      "io.circe" %% "circe-parser" % circeVersion withSources(),
+      "org.apache.avro" % "avro" % "1.10.0",
     )
   )
 
