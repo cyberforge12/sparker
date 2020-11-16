@@ -3,7 +3,7 @@ package com.target.loader
 import java.util.Properties
 
 import org.apache.log4j.PropertyConfigurator
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.{Failure, Success, Try}
 
@@ -71,16 +71,24 @@ object Loader extends LazyLogging {
       .option("sep", ";")
       .option("inferSchema", "true")
       .option("header", "true")
-    Try(df_reader.load(events)) match {
-      case Success(value) => new Encoder(value)
-//        DataframeValidator.validate(value, Globals.FileTypesEnum.e_events, valid_map)
-      case Failure(exception) => ErrorHandler.error(exception)
+    var df1: DataFrame = ???
+    var df2: DataFrame = ???
+    var resFrame: DataFrame = ???
+    try {
+      df1 = DataframeValidator.validateEvents(df_reader.load(events))
     }
-    Try(df_reader.load(facts)) match {
-      case Success(value) => value
-//        DataframeValidator.validate(value, Globals.FileTypesEnum.e_facts, valid_map)
-      case Failure(exception) => ErrorHandler.error(exception)
+    catch {
+      case e: Exception => ErrorHandler.error(e)
     }
-    Sender.send("111")
+
+    try {
+      df2 = DataframeValidator.validateFacts(df_reader.load(facts))
+    }
+    catch {
+      case e: Exception => ErrorHandler.error(e)
+    }
+    if (!df1.isEmpty && !df2.isEmpty) resFrame = DataframeValidator.validate(df1, df2)
+    resFrame.toJSON.foreach(Sender.send(_))
+    //Sender.send("111")
   }
 }
