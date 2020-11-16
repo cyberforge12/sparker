@@ -1,6 +1,7 @@
 package com.target.saver
 
 import scala.util.{Failure, Success, Try}
+import org.apache.spark.sql.SparkSession
 
 object Saver extends App with LazyLogging {
 
@@ -20,8 +21,24 @@ object Saver extends App with LazyLogging {
   if (args.length == 3) {
     logger.info("Running Saver")
     parseArgs(args)
-    val dbh = new DbhPostgres(conn_str)
-    val results = dbh.requestMessages(table)
+    val spark = SparkSession
+      .builder()
+      .appName("Saver")
+      .config("spark.master", "local")
+      .getOrCreate()
+    val jdbc_reader = spark.read
+      .format("jdbc")
+      .option("url", conn_str)
+      .option("dbtable", s"(SELECT * FROM $table WHERE status=0) tmp")
+
+    val jdbcDf = Try(jdbc_reader.load()) match {
+      case Success(value) =>
+        logger.info("Successfully fetched records from database")
+        value
+      case Failure(exception) =>
+        ErrorHandler.error(exception)
+        sys.exit(1)
+    }
   }
   else {
     print(usage)
