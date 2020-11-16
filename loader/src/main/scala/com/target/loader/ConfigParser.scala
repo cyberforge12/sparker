@@ -11,29 +11,20 @@ import io.circe.{Json, ParsingFailure}
 
 import scala.io.{BufferedSource, Source}
 import scala.util.{Failure, Success, Try}
-import scala.collection.mutable._
+import scala.collection.mutable.Set
 import scala.collection.JavaConversions._
 
 class ConfigParser (filename: String) extends LazyLogging {
   val configMap: java.util.LinkedHashMap[String, String] = parseToLinkedHashMap(filename)
   val eventKeyColumns: Set[String] = getKeyColumns(Globals.eventTable)
   val factsKeyColumns: Set[String] = getKeyColumns(Globals.factsTable)
-  var eventsNullable = getNullable(Globals.eventTable)
-  val circeADT = new CirceParser(fixYaml(loadFromFile(filename)), this)
-  val value = circeADT.value.tables
+  val configLinkedHashMap = parseToLinkedHashMap(filename)
+  val configClasses = parseToClass(filename)
 
   def getNullable(table: String) = {
     val tableMap = configMap("validate")
       .asInstanceOf[java.util.LinkedHashMap[String, String]]
       .get(table).asInstanceOf[java.util.LinkedHashMap[String, String]]
-
-/*
-    for (i <- eventKeyColumns) {
-      println(i)
-      println(tableMap.entrySet())
-    }
-*/
-
   }
 
 
@@ -69,8 +60,6 @@ class ConfigParser (filename: String) extends LazyLogging {
     val obj = config.asObject
     val x = cursor.downField("validate").downField(table)
     List[String]()
-//    val ret = for (i <- hashMap) yield i._1
-//    ret.asInstanceOf[List[String]]
   }
 
   private def fixYaml(yaml: String): String = {
@@ -78,10 +67,15 @@ class ConfigParser (filename: String) extends LazyLogging {
     yaml.replaceAll(pattern, "$1\'$3\'")
   }
 
-  def parseToLinkedHashMap(filename: String): java.util.LinkedHashMap[String, String] = {
+  private def parseToLinkedHashMap(filename: String): java.util.LinkedHashMap[String, String] = {
     val yaml = fixYaml(loadFromFile(filename))
     val reader = new Yaml()
     reader.load(yaml)
+  }
+
+  private def parseToClass(filename: String): Map[String, Any] = {
+    val circeADT = new CirceParser(fixYaml(loadFromFile(filename)), this)
+    circeADT.value.tables
   }
 
   def parseToJson(filename: String): Json = {
