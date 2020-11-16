@@ -4,10 +4,7 @@ import scala.util.{Failure, Success, Try}
 
 object Saver extends App with LazyLogging {
 
-  /*
-   */
-
-  var dbh: String = ""
+  var conn_str: String = ""
   var scheme: String = ""
   var table: String = ""
   val usage =
@@ -23,6 +20,8 @@ object Saver extends App with LazyLogging {
   if (args.length == 3) {
     logger.info("Running Saver")
     parseArgs(args)
+    val dbh = new DbhPostgres(conn_str)
+    val results = dbh.requestMessages(table)
   }
   else {
     print(usage)
@@ -32,11 +31,11 @@ object Saver extends App with LazyLogging {
   def parseArgs(args: Array[String]): Unit = {
 
     logger.info("Parsing CLI arguments")
-    val lst = args.map(_.split("="))
+    val lst = args.map(_.split("=", 2))
     for (i <- lst) {
       if (i.length == 2) {
         i(0) match {
-          case "dbh" => dbh = i(1)
+          case "dbh" => conn_str = i(1)
           case "scheme" => scheme = i(1)
           case "table" => table = i(1)
           case _ => ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
@@ -45,6 +44,6 @@ object Saver extends App with LazyLogging {
       else
         ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
     }
-    logger.info("Parsed arguments as dbh=" + dbh + ", scheme=" + scheme + ", table=" + table)
+    logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + scheme + ", table=" + table)
   }
 }
