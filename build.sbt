@@ -47,6 +47,17 @@ lazy val http = (project in file("HttpScalatra"))
       "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-web" % "2.13.3",
-)
+    )
+  )
+
+lazy val daver = (project in file("saver"))
+  .settings(
+    name := "saver",
+    libraryDependencies ++= Seq(
+      "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
+      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-web" % "2.13.3",
+    )
   )
 
