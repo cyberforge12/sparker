@@ -63,6 +63,7 @@ lazy val daver = (project in file("saver"))
       "io.circe" %% "circe-core" % circeVersion withSources(),
       "io.circe" %% "circe-generic" % circeVersion withSources(),
       "io.circe" %% "circe-parser" % circeVersion withSources(),
+      "org.apache.spark" %% "spark-avro" % "2.4.7",
       "org.apache.avro" % "avro" % "1.10.0",
     )
   )

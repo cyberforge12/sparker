@@ -1,7 +1,7 @@
 package com.target.saver
 
 import scala.util.{Failure, Success, Try}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object Saver extends App with LazyLogging {
 
@@ -21,34 +21,18 @@ object Saver extends App with LazyLogging {
   if (args.length == 3) {
     logger.info("Running Saver")
     parseArgs(args)
-
     val avroSchema = new SchemaParser(schema).schema
+    val df = getDataframe
+    val dfSchema = new SchemaParser(df.schema.toString()).schema
+    println(dfSchema)
 
-    val spark = SparkSession
-      .builder()
-      .appName("Saver")
-      .config("spark.master", "local")
-      .getOrCreate()
-    val jdbc_reader = spark.read
-      .format("jdbc")
-      .option("url", conn_str)
-      .option("dbtable", s"(SELECT * FROM $table WHERE status=0) tmp")
-
-    val jdbcDf = Try(jdbc_reader.load()) match {
-      case Success(value) =>
-        logger.info("Successfully fetched records from database")
-        value
-      case Failure(exception) =>
-        ErrorHandler.error(exception)
-        sys.exit(1)
-    }
   }
   else {
     print(usage)
     sys.exit(1)
   }
 
-  def parseArgs(args: Array[String]): Unit = {
+  private def parseArgs(args: Array[String]): Unit = {
 
     logger.info("Parsing CLI arguments")
     val lst = args.map(_.split("=", 2))
@@ -65,5 +49,26 @@ object Saver extends App with LazyLogging {
         ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
     }
     logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + schema + ", table=" + table)
+  }
+
+  private def getDataframe: DataFrame = {
+    val spark = SparkSession
+      .builder()
+      .appName("Saver")
+      .config("spark.master", "local")
+      .getOrCreate()
+    val jdbc_reader = spark.read
+      .format("jdbc")
+      .option("url", conn_str)
+      .option("dbtable", s"(SELECT * FROM $table WHERE status=0) tmp")
+
+    Try(jdbc_reader.load()) match {
+      case Success(value) =>
+        logger.info("Successfully fetched records from database")
+        value
+      case Failure(exception) =>
+        ErrorHandler.error(exception)
+        sys.exit(1)
+    }
   }
 }

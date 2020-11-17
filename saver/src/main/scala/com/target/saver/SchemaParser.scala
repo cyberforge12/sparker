@@ -3,6 +3,7 @@ package com.target.saver
 import scala.io.{BufferedSource, Source}
 import scala.util.{Failure, Success, Try}
 import org.apache.avro.Schema
+import org.apache.avro._
 
 class SchemaParser(schemaFilename: String) extends LazyLogging {
 
