@@ -2,27 +2,74 @@ package com.target.loader
 
 import java.util
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark
+import org.apache.spark.sql.SparkSession
+import org.apache.spark._
+import org.apache.spark.sql.{DataFrame, Row}
+
+import scala.collection.mutable.ListBuffer
 
 object DataframeValidator extends LazyLogging {
 
-  def validateFacts(df: DataFrame, map: util.LinkedHashMap[String, String]): Unit = {
+  val validator = new Validate()
+  val spark = SparkSession
+    .builder()
+    .appName("Loader")
+    .config("spark.master", "local")
+    .getOrCreate()
+
+  def validateFacts(df: DataFrame): DataFrame = {
     logger.info(s"Validating facts dataframe")
-    df.foreach(println(_))
+    val schema = df.schema
+    var validExtList = ListBuffer[Row]()
+    var errorExtList = ListBuffer[Row]()
+
+    df.rdd.collect().foreach(parseRow(_, validExtList, errorExtList, validator.ext_vals))
+    val errorExtDf = spark.createDataFrame(spark.sparkContext.parallelize(errorExtList.toSeq), schema)
+    errorExtDf.coalesce(1)
+      .write
+      .option("header","true")
+      .option("sep",",")
+      .mode("overwrite")
+      .csv("error")
+    spark.createDataFrame(spark.sparkContext.parallelize(validExtList.toSeq), schema)
   }
 
-  def validateEvents(df: DataFrame, map: util.LinkedHashMap[String, String]): Unit = {
+  def validateEvents(df: DataFrame): DataFrame = {
     logger.info(s"Validating events dataframe")
+    val schema = df.schema
+    var validEventList = ListBuffer[Row]()
+    var errorEventList = ListBuffer[Row]()
 
+    df.rdd.collect().foreach(parseRow(_, validEventList, errorEventList, validator.event_vals))
+    val errorEventDf = spark.createDataFrame(spark.sparkContext.parallelize(errorEventList.toSeq), schema)
+    errorEventDf.coalesce(1)
+      .write
+      .option("header","true")
+      .option("sep",",")
+      .mode("append")
+      .csv("error")
+    spark.createDataFrame(spark.sparkContext.parallelize(validEventList.toSeq), schema)
   }
 
-  def validate(df: DataFrame, df_type: Globals.FileTypesEnum.FileTypesEnum, map: java.util.LinkedHashMap[String, String])
-  : Unit = {
-    df_type match {
-      case facts => validateFacts(df, map)
-      case events => validateEvents(df, map)
+  def validate(df1: DataFrame, df2: DataFrame)
+  : DataFrame = {
+    val result = df1.join(df2, df1("event_id") === df2("event_id"), "inner")
+    result.filter(result("type_operation") === "RurPayment").filter(result("event_channel") === "MOBILE")
+  }
+
+  //после валидации дает уже отфильтрованный датафрейм.
+
+
+  def parseRow(row: Row, validDf: ListBuffer[Row], errorList: ListBuffer[Row], mapVals: Map[String, validator.ValidateConfig]): Unit = {
+    var error = 0
+    val rowMap = row.getValuesMap[String](row.schema.fieldNames)
+    for (field <- rowMap.keySet) { if (mapVals.contains(field)) {
+      if (!validator.validateField(rowMap(field), mapVals(field))) {error+= 1; println(field + " point " + rowMap(field))}
     }
-    df.show()
+    }
+    if (error == 0) validDf += row
+    else errorList += row
   }
 
 }
