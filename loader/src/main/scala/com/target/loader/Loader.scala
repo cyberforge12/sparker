@@ -69,7 +69,6 @@ object Loader extends LazyLogging {
       .getOrCreate()
     val df_reader = spark.read.format("csv")
       .option("sep", ";")
-      .option("inferSchema", "true")
       .option("header", "true")
     //Надо завести
     var df1: DataFrame = spark.emptyDataFrame

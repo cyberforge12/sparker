@@ -64,9 +64,16 @@ object DataframeValidator extends LazyLogging {
   def parseRow(row: Row, validDf: ListBuffer[Row], errorList: ListBuffer[Row], mapVals: Map[String, validator.ValidateConfig]): Unit = {
     var error = 0
     val rowMap = row.getValuesMap[String](row.schema.fieldNames)
-    for (field <- rowMap.keySet) { if (mapVals.contains(field)) {
-      if (!validator.validateField(rowMap(field), mapVals(field))) {error+= 1; println(field + " point " + rowMap(field))}
-    }
+    for (field <- rowMap.keys) {
+      logger.info("Validated field " + field)
+      if (mapVals.contains(field)) {
+        //TODO: поле event_dt при загрузке распарсилось как Int, поэтому невозможно запустить сравнение с regex.
+        // Возможно другие поля тоже кастанулись в типы, отличные от String
+        if (!validator.validateField(rowMap(field), mapVals(field))) {
+          error+= 1
+          println(field + " point " + rowMap(field))
+        }
+      }
     }
     if (error == 0) validDf += row
     else errorList += row
