@@ -19,6 +19,7 @@ lazy val loader = (project in file("loader"))
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
     name := "loader",
     libraryDependencies ++= Seq(
+      "org.scalaj" %% "scalaj-http" % "2.4.2",
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql" % sparkVersion,
       "junit" % "junit" % "4.13.1" % Test,
