@@ -1,7 +1,12 @@
 package com.target.saver
 
 import scala.util.{Failure, Success, Try}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql._
+import org.apache.avro.Schema
+import org.apache.spark.sql.functions.schema_of_json
+import org.apache.spark.sql.types.StructType
+
+import net.liftweb.json._
 
 object Saver extends App with LazyLogging {
 
@@ -17,19 +22,54 @@ object Saver extends App with LazyLogging {
           schema    path to AVRO-scheme file
           table     POSTGRES table name containing messages
   """
+  val spark = SparkSession
+    .builder()
+    .appName("Saver")
+    .config("spark.master", "local")
+    .getOrCreate()
+
 
   if (args.length == 3) {
     logger.info("Running Saver")
     parseArgs(args)
-    val avroSchema = new SchemaParser(schema).schema
-    val df = getDataframe
-    val dfSchema = new SchemaParser(df.schema.toString()).schema
-    println(dfSchema)
+    val avroSchema = SchemaParser.getAvroSchemaFromFile(schema)
 
+    val df = getDataframeFromDatabase
+    validateUsingSQLFunctions(df)
+    validateDataframe(df, SchemaParser.getSparkSchemaFromFile(schema))
   }
   else {
     print(usage)
     sys.exit(1)
+  }
+
+  def validateUsingClass(df: DataFrame, schema: StructType) = {
+    logger.info("Validating dataframe with selected scheme using Checker.class")
+    DataFrameSchemaChecker.validateSchema(df, schema)
+  }
+
+  def jsonToDataFrame(json: String, schema: StructType = null): DataFrame = {
+    val reader = spark.read
+    Option(schema).foreach(reader.schema)
+    reader.json(spark.sparkContext.parallelize(Array(json)))
+  }
+
+  def getDfFromJsonString(json: String) = {
+    logger.info("Getting dataframe from json string")
+    import spark.implicits._
+    spark.read.json(Seq(json).toDS)
+  }
+
+  def validateUsingSQLFunctions(df: DataFrame) = {
+    import spark.implicits._
+
+    import org.apache.spark.sql.functions.{lit, schema_of_json, from_json}
+    import collection.JavaConverters._
+
+    val schemaNewDF = Try(schema_of_json(lit(df.select("req_body").as[String].first)))
+//    newDF.withColumn("jsonData", from_json($"jsonData", schema, Map[String, String]().asJava))
+
+
   }
 
   private def parseArgs(args: Array[String]): Unit = {
@@ -51,16 +91,12 @@ object Saver extends App with LazyLogging {
     logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + schema + ", table=" + table)
   }
 
-  private def getDataframe: DataFrame = {
-    val spark = SparkSession
-      .builder()
-      .appName("Saver")
-      .config("spark.master", "local")
-      .getOrCreate()
+  private def getDataframeFromDatabase: DataFrame = {
+
     val jdbc_reader = spark.read
       .format("jdbc")
       .option("url", conn_str)
-      .option("dbtable", s"(SELECT * FROM $table WHERE status=0) tmp")
+      .option("dbtable", s"(SELECT req_body FROM $table WHERE status=0) tmp")
 
     Try(jdbc_reader.load()) match {
       case Success(value) =>
