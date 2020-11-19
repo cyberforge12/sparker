@@ -3,11 +3,12 @@ import java.sql.{Connection, DriverManager, ResultSet}
 
 import net.liftweb.json._
 
-class WebService extends ScalatraServlet {
+class WebService extends ScalatraServlet with LazyLogging {
   get("/") {
     "Ez"
   }
   post("/handleJson") {
+    logger.info("Incoming request...")
     val jsonString = request.body
     //implicit val formats = DefaultFormats
     val jValue = parse(jsonString)
@@ -19,7 +20,8 @@ class WebService extends ScalatraServlet {
       val prep = conn.prepareStatement("INSERT INTO task (status, req_body) VALUES (?, ?) ")
       prep.setInt(1, 0)
       prep.setString(2, compactRender(jValue))
-      prep.executeUpdate()
+      prep.execute()
+      logger.info("Added success record to the database")
       println("Success!")
     }
     catch {
@@ -27,6 +29,7 @@ class WebService extends ScalatraServlet {
         val prep = conn.prepareStatement("INSERT INTO task (status, err_msg) VALUES (?, ?) ")
         prep.setInt(1, 2)
         prep.setString(2, e.toString)
+        logger.info("Added error record to the database. Error: " + e.toString)
 
       }
     }
@@ -47,6 +50,6 @@ id SERIAL PRIMARY KEY,
 date TIMESTAMP DEFAULT NOW(),
 status INT NOT NULL,
 err_msg VARCHAR ( 50 ) DEFAULT NULL,
-req_body VARCHAR ( 255 ) DEFAULT NULL
+req_body TEXT DEFAULT NULL);
 )
  */

@@ -5,6 +5,8 @@ import java.util
 import org.apache.spark
 import org.apache.spark.sql.SparkSession
 import org.apache.spark._
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.collection.mutable.ListBuffer
@@ -54,7 +56,9 @@ object DataframeValidator extends LazyLogging {
 
   def validate(df1: DataFrame, df2: DataFrame)
   : DataFrame = {
-    val result = df1.join(df2, df1("event_id") === df2("event_id"), "inner")
+    val result = df1.join(df2, "event_id")
+      .drop(df2.col("event_dt"))
+      .drop(df2.col("ccaf_dt_load"))
     result.filter(result("type_operation") === "RurPayment").filter(result("event_channel") === "MOBILE")
   }
 

@@ -6,6 +6,7 @@ ThisBuild / scalaVersion := "2.11.12"
 
 val circeVersion = "0.11.2"
 val sparkVersion = "2.4.0"
+val liftVersion = "3.3.0"
 
 lazy val root = project
   .in(file("."))
@@ -48,6 +49,32 @@ lazy val http = (project in file("HttpScalatra"))
       "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-web" % "2.13.3",
-)
+    )
+  )
+
+lazy val saver = (project in file("saver"))
+  .settings(
+    name := "saver",
+    libraryDependencies ++= Seq(
+      "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
+      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-web" % "2.13.3",
+      "org.apache.spark" %% "spark-core" % sparkVersion,
+      "org.apache.spark" %% "spark-sql" % sparkVersion withSources(),
+      "io.circe" %% "circe-core" % circeVersion withSources(),
+      "io.circe" %% "circe-generic" % circeVersion withSources(),
+      "io.circe" %% "circe-parser" % circeVersion withSources(),
+      "org.apache.spark" %% "spark-avro" % "2.4.7",
+      "org.apache.avro" % "avro" % "1.10.0",
+      "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
+),
+    dependencyOverrides ++= {
+      Seq(
+        "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7.1",
+        "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.7",
+        "com.fasterxml.jackson.core" % "jackson-core" % "2.6.7"
+      )
+    }
   )
 
