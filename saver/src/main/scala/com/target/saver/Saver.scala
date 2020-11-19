@@ -35,18 +35,21 @@ object Saver extends App with LazyLogging {
 
 
   //TODO: removed saving and reading from file
-  def getDFList(df: DataFrame): ListBuffer[DataFrame] = {
+  def getDFList(df: DataFrame): ListBuffer[(String, String, DataFrame)] = {
     val tmpJsonFile = "tmp.json"
-    val listDF = ListBuffer[DataFrame]()
+    val listDF = ListBuffer[(String, String, DataFrame)]()
     val iter = df.toLocalIterator()
     while (iter.hasNext) {
       val file = new File(tmpJsonFile)
       val bw = new BufferedWriter(new FileWriter(file))
-      bw.write(iter.next().toString())
+      val row = iter.next()
+      val req_body = row.getAs[String]("req_body")
+      bw.write(req_body)
       bw.close()
+      val date = row.getAs[String]("short_date")
       val df = Try(spark.read.json(tmpJsonFile))
       df match {
-        case Success(value) => listDF += value
+        case Success(value) => listDF += ((date, req_body, value))
         case Failure(exception) => logger.error(exception.getMessage)
       }
     }
@@ -58,11 +61,23 @@ object Saver extends App with LazyLogging {
         .withColumn("transaction_amount", col("transaction_amount").cast(LongType))
   }
 
-  //TODO:
+  //TODO: Уточнить у Игоря про разделение на слои и нужно ли создавать отдельные файлы под каждую запись
 
-  def saveDfToParquet(validDF: DataFrame) = {
+  def saveDfToParquet(date: String, srcString: String, incDF: DataFrame) = {
     logger.info("Preparing parquet-file...")
+    val uuid = java.util.UUID.randomUUID.toString
+    import spark.implicits._
+    val srcDF = List((uuid, date, srcString)).toDF("uuid", "date", "req_body")
 
+    srcDF.write
+      .partitionBy("date")
+      .parquet("saver-" + uuid + ".parquet")
+
+    incDF.write
+      .mode("append")
+      .option("encoding", "UTF-16")
+      .option("charset", "UTF-16")
+      .parquet("saver-" + uuid + ".parquet")
   }
 
   //TODO:
@@ -75,10 +90,10 @@ object Saver extends App with LazyLogging {
 
     val listDF = getDFList(df)
     for (i <- listDF) {
-      val validDF = fixDfTypes(i)
+      val validDF = fixDfTypes(i._3)
       Try(DataFrameSchemaChecker.validateSchema(validDF, schema)) match {
         case Success(value) =>
-          saveDfToParquet(validDF)
+          saveDfToParquet(i._1, i._2, validDF)
         case Failure(exception) =>
           sendErrorToDatabse(validDF)
       }
@@ -132,12 +147,12 @@ object Saver extends App with LazyLogging {
     val jdbc_reader = spark.read
       .format("jdbc")
       .option("url", conn_str)
-      .option("dbtable", s"(SELECT req_body FROM $table WHERE status=0) tmp")
+      .option("dbtable", s"(SELECT date, req_body FROM $table WHERE status=0) tmp")
 
     Try(jdbc_reader.load()) match {
       case Success(value) =>
         logger.info("Successfully fetched " + value.count() + " records from database")
-        value
+        value.withColumn("short_date", date_format(col("date"), "yyyyMMdd"))
       case Failure(exception) =>
         ErrorHandler.error(exception)
         sys.exit(1)
