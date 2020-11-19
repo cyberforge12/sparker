@@ -3,19 +3,15 @@ package com.target.saver
 import java.io.{BufferedWriter, File, FileWriter}
 
 import scala.util.{Failure, Success, Try}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
-import org.apache.spark.sql.avro._
-import org.apache.avro.{Schema, ValidateAll}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.avro.Schema
 import org.apache.avro.data.Json
-import org.apache.spark.sql.functions.{from_json, schema_of_json}
 import org.apache.spark.sql.types.StructType
 import net.liftweb.json._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 import scala.collection.mutable.ListBuffer
-
-
 
 object Saver extends App with LazyLogging {
 
@@ -38,6 +34,7 @@ object Saver extends App with LazyLogging {
     .getOrCreate()
 
 
+  //TODO: removed saving and reading from file
   def getDFList(df: DataFrame): ListBuffer[DataFrame] = {
     val tmpJsonFile = "tmp.json"
     val listDF = ListBuffer[DataFrame]()
@@ -88,30 +85,6 @@ object Saver extends App with LazyLogging {
     }
   }
 
-  def validateUsingClass(df: DataFrame, schema: StructType) = {
-    logger.info("Validating dataframe with selected scheme using Checker.class")
-    DataFrameSchemaChecker.validateSchema(df, schema)
-  }
-
-  def getDfFromJsonRDD(json: String, schema: StructType = null): DataFrame = {
-    //    val reader = spark.read
-    //    Option(schema).foreach(reader.schema)
-    //    reader.json(spark.sparkContext.parallelize(Array(json)))
-
-    val json2 = JsonParser.parse(json)
-    val json3 = prettyRender(json2)
-    var strList = Seq.empty[String]
-    strList = strList :+ json3
-    val rddData = spark.sparkContext.parallelize(strList)
-    import spark.implicits._
-    val ds = rddData.toDS
-
-    //    val resultDF = spark.createDataFrame(rddData, schema)
-    val resultDF = spark.read.option("multiline", "true").json(rddData)
-    resultDF.show()
-    resultDF
-  }
-
   def getDfFromJsonString(json: String) = {
     logger.info("Getting dataframe from json string")
     import spark.implicits._
@@ -135,18 +108,6 @@ object Saver extends App with LazyLogging {
       .json(ds.toDS())
   }
 
-  def validateUsingSQLFunctions(df: DataFrame) = {
-    import spark.implicits._
-
-    import org.apache.spark.sql.functions.{lit, schema_of_json, from_json}
-    import collection.JavaConverters._
-
-    val schemaNewDF = Try(schema_of_json(lit(df.select("req_body").as[String].first)))
-    //    newDF.withColumn("jsonData", from_json($"jsonData", schema, Map[String, String]().asJava))
-
-
-  }
-
   private def parseArgs(args: Array[String]): Unit = {
 
     logger.info("Parsing CLI arguments")
@@ -164,24 +125,6 @@ object Saver extends App with LazyLogging {
         ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
     }
     logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + schema + ", table=" + table)
-  }
-
-  private def createDataframeWithAvroSchema(schema: Schema): DataFrame = {
-
-    val jdbc_reader = spark.read
-      .format("json")
-      .option("url", conn_str)
-      .option("avroSchema", schema.toString)
-      .option("dbtable", s"(SELECT req_body FROM $table WHERE status=0) tmp")
-
-    Try(jdbc_reader.load()) match {
-      case Success(value) =>
-        logger.info("Successfully fetched records from database")
-        value
-      case Failure(exception) =>
-        ErrorHandler.error(exception)
-        sys.exit(1)
-    }
   }
 
   private def getDataframeFromDatabase: DataFrame = {
@@ -207,12 +150,11 @@ object Saver extends App with LazyLogging {
     logger.info("Running Saver")
     parseArgs(args)
 
-    val sparkSchema = SchemaParser.getSparkSchemaFromFile(schema)
     val df = getDataframeFromDatabase
     validateRecords(df, SchemaParser.getSparkSchemaFromFile(schema))
   }
   else {
     print(usage)
-    sys.exit(1)
+    sys.exit(0)
   }
 }

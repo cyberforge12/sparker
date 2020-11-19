@@ -43,7 +43,7 @@ object SchemaParser extends LazyLogging {
   }
 
   def getSparkSchemaFromFile(filename: String): StructType = {
-    val avroSchema = SchemaParser.getJsonStringFromFile(schema)
+    val avroSchema = SchemaParser.getJsonStringFromFile(filename)
     spark.read
       .format("avro")
       .option("avroSchema", avroSchema)
