@@ -1,6 +1,8 @@
 package com.target.saver
 
 import java.io.{BufferedWriter, File, FileWriter}
+import java.sql.{Connection, DriverManager, ResultSet}
+
 
 import scala.util.{Failure, Success, Try}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -15,6 +17,7 @@ import scala.collection.mutable.ListBuffer
 
 object Saver extends App with LazyLogging {
 
+  val con_st = "jdbc:postgresql://localhost:5432/task?user=postgres"
   var conn_str: String = ""
   var schema: String = ""
   var table: String = ""
@@ -82,8 +85,17 @@ object Saver extends App with LazyLogging {
 
   //TODO:
 
-  def sendErrorToDatabse(validDF: DataFrame) = {
+  def sendErrorToDatabse(validDF: DataFrame, e: Throwable) = {
     logger.info("Updating the record in the database with error code 2...")
+    try {
+      val conn = DriverManager.getConnection(con_st)
+      val prep = conn.prepareStatement("UPDATE task SET status = 2, err_msg = ? WHERE req_body = ?")
+      prep.setString(1, e.toString)
+      prep.setString(2, validDF.toJSON.head)
+      prep.execute()
+      logger.info("Changed error string")
+      println("Success!")
+    }
   }
 
   def validateRecords(df: DataFrame, schema: StructType) = {
@@ -95,7 +107,7 @@ object Saver extends App with LazyLogging {
         case Success(value) =>
           saveDfToParquet(i._1, i._2, validDF)
         case Failure(exception) =>
-          sendErrorToDatabse(validDF)
+          sendErrorToDatabse(validDF, exception)
       }
     }
   }
