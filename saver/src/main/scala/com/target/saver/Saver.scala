@@ -9,7 +9,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.avro.Schema
 import org.apache.avro.data.Json
 import org.apache.spark.sql.types.StructType
-import net.liftweb.json._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
@@ -17,7 +16,6 @@ import scala.collection.mutable.ListBuffer
 
 object Saver extends App with LazyLogging {
 
-  val con_st = "jdbc:postgresql://localhost:5432/task?user=postgres"
   var conn_str: String = ""
   var schema: String = ""
   var table: String = ""
@@ -38,9 +36,9 @@ object Saver extends App with LazyLogging {
 
 
   //TODO: removed saving and reading from file
-  def getDFList(df: DataFrame): ListBuffer[(String, String, DataFrame)] = {
+  def getDFList(df: DataFrame): ListBuffer[(String, String, String, DataFrame, Int)] = {
     val tmpJsonFile = "tmp.json"
-    val listDF = ListBuffer[(String, String, DataFrame)]()
+    val listDF = ListBuffer[(String, String, String, DataFrame, Int)]()
     val iter = df.toLocalIterator()
     while (iter.hasNext) {
       val file = new File(tmpJsonFile)
@@ -50,9 +48,11 @@ object Saver extends App with LazyLogging {
       bw.write(req_body)
       bw.close()
       val date = row.getAs[String]("short_date")
+      val timestamp = row.getAs[java.sql.Timestamp]("date").toString
+      val id = row.getAs[Int]("id")
       val df = Try(spark.read.json(tmpJsonFile))
       df match {
-        case Success(value) => listDF += ((date, req_body, value))
+        case Success(value) => listDF += ((timestamp, date, req_body, value, id))
         case Failure(exception) => logger.error(exception.getMessage)
       }
     }
@@ -85,13 +85,13 @@ object Saver extends App with LazyLogging {
 
   //TODO:
 
-  def sendErrorToDatabse(validDF: DataFrame) = {
+  def sendErrorToDatabse(id: Int) = {
     logger.info("Updating the record in the database with error code 2...")
+    val conn = DriverManager.getConnection(conn_str)
     try {
-      val conn = DriverManager.getConnection(con_st)
-      val prep = conn.prepareStatement("UPDATE task SET status = 2, err_msg = ? WHERE req_body = ?")
+      val prep = conn.prepareStatement("UPDATE task SET status = 2, err_msg = ? WHERE id = ?")
       prep.setString(1, "Invalid JSON")
-      prep.setString(2, validDF.toJSON.head)
+      prep.setInt(2, id)
       prep.execute()
       logger.info("Changed error string")
       println("Success!")
@@ -111,12 +111,13 @@ object Saver extends App with LazyLogging {
 
     val listDF = getDFList(df)
     for (i <- listDF) {
-      val validDF = fixDfTypes(i._3)
+//      val validDF = fixDfTypes(i._3)
+      val validDF = i._4
       Try(DataFrameSchemaChecker.validateSchema(validDF, schema)) match {
         case Success(value) =>
-          saveDfToParquet(i._1, i._2, validDF)
+          saveDfToParquet(i._2, i._3, validDF)
         case Failure(exception) =>
-          sendErrorToDatabse(validDF)
+          sendErrorToDatabse(i._5)
       }
     }
   }
@@ -168,7 +169,7 @@ object Saver extends App with LazyLogging {
     val jdbc_reader = spark.read
       .format("jdbc")
       .option("url", conn_str)
-      .option("dbtable", s"(SELECT date, req_body FROM $table WHERE status=0) tmp")
+      .option("dbtable", s"(SELECT id, date, req_body FROM $table WHERE status=0) tmp")
 
     Try(jdbc_reader.load()) match {
       case Success(value) =>

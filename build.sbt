@@ -1,4 +1,5 @@
 import sbt.Keys.libraryDependencies
+import Dependencies._
 organization := "com.target"
 autoCompilerPlugins := true
 
@@ -12,11 +13,12 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "sparker",
-    version := "0.3.0"
+    version := "0.3.0",
   )
 
 lazy val loader = (project in file("loader"))
   .settings(
+    mainClass in Compile := Some("com.target.loader.Loader"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
     name := "loader",
     libraryDependencies ++= Seq(
@@ -67,7 +69,6 @@ lazy val saver = (project in file("saver"))
       "io.circe" %% "circe-parser" % circeVersion withSources(),
       "org.apache.spark" %% "spark-avro" % "2.4.7",
       "org.apache.avro" % "avro" % "1.10.0",
-      "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
 ),
     dependencyOverrides ++= {
       Seq(

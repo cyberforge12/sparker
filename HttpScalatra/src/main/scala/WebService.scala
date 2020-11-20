@@ -46,7 +46,7 @@ class Stock (var symbol: String, var price: Double) {
 
 /*
 CREATE TABLE task (
-id SERIAL PRIMARY KEY,
+id BIGSERIAL PRIMARY KEY,
 date TIMESTAMP DEFAULT NOW(),
 status INT NOT NULL,
 err_msg VARCHAR ( 50 ) DEFAULT NULL,
