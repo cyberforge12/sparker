@@ -85,17 +85,26 @@ object Saver extends App with LazyLogging {
 
   //TODO:
 
-  def sendErrorToDatabse(validDF: DataFrame, e: Throwable) = {
+  def sendErrorToDatabse(validDF: DataFrame) = {
     logger.info("Updating the record in the database with error code 2...")
     try {
       val conn = DriverManager.getConnection(con_st)
       val prep = conn.prepareStatement("UPDATE task SET status = 2, err_msg = ? WHERE req_body = ?")
-      prep.setString(1, e.toString)
+      prep.setString(1, "Invalid JSON")
       prep.setString(2, validDF.toJSON.head)
       prep.execute()
       logger.info("Changed error string")
       println("Success!")
     }
+    catch {
+    case e: Exception => {
+      val prep = conn.prepareStatement("INSERT INTO task (status, err_msg) VALUES (?, ?) ")
+      prep.setInt(1, 2)
+      prep.setString(2, e.toString)
+      logger.info("Added error record to the database. Error: " + e.toString)
+    }
+    }
+    finally {conn.close()}
   }
 
   def validateRecords(df: DataFrame, schema: StructType) = {
@@ -107,7 +116,7 @@ object Saver extends App with LazyLogging {
         case Success(value) =>
           saveDfToParquet(i._1, i._2, validDF)
         case Failure(exception) =>
-          sendErrorToDatabse(validDF, exception)
+          sendErrorToDatabse(validDF)
       }
     }
   }
