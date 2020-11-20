@@ -67,6 +67,9 @@ object Loader extends LazyLogging {
       .appName("Loader")
       .config("spark.master", "local")
       .getOrCreate()
+
+    spark.sparkContext.setLogLevel("ERROR")
+
     val df_reader = spark.read.format("csv")
       .option("sep", ";")
       .option("header", "true")
