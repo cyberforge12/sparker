@@ -9,8 +9,14 @@ val circeVersion = "0.11.2"
 val sparkVersion = "2.4.0"
 val liftVersion = "3.3.0"
 
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
+
 lazy val root = project
   .in(file("."))
+  .aggregate(http, loader,saver)
   .settings(
     name := "sparker",
     version := "0.3.0",
@@ -21,6 +27,7 @@ lazy val loader = (project in file("loader"))
     mainClass in Compile := Some("com.target.loader.Loader"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
     name := "loader",
+    assemblyJarName in assembly := "loader.jar",
     libraryDependencies ++= Seq(
       "org.scalaj" %% "scalaj-http" % "2.4.2",
       "org.apache.spark" %% "spark-core" % sparkVersion,
@@ -43,6 +50,8 @@ lazy val loader = (project in file("loader"))
 lazy val http = (project in file("HttpScalatra"))
   .settings(
     name := "http",
+    mainClass in Compile := Some("com.target.loader.Main"),
+    assemblyJarName in assembly := "http.jar",
     libraryDependencies ++= Seq(
       "org.scalatra" %% "scalatra" % "2.5.4",
       "org.eclipse.jetty" % "jetty-webapp" % "9.4.12.v20180830",
@@ -57,6 +66,8 @@ lazy val http = (project in file("HttpScalatra"))
 lazy val saver = (project in file("saver"))
   .settings(
     name := "saver",
+    mainClass in Compile := Some("com.target.loader.Saver"),
+    assemblyJarName in assembly := "saver.jar",
     libraryDependencies ++= Seq(
       "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
       "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
@@ -78,4 +89,3 @@ lazy val saver = (project in file("saver"))
       )
     }
   )
-
