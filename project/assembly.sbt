@@ -1,4 +1,5 @@
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
+//addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
+
 //resolvers += Resolver.url(
 //  "idio",
 //  url("http://dl.bintray.com/idio/sbt-plugins")

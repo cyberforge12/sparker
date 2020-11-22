@@ -3,11 +3,16 @@ import Dependencies._
 import sbtassembly.AssemblyPlugin.autoImport.{MergeStrategy, PathList}
 
 import scala.Seq
+
 ThisBuild / organization := "com.target"
 
 ThisBuild / version      := "1.0.0"
 
 ThisBuild / scalaVersion := "2.11.12"
+
+cancelable in Global := true
+
+logLevel in assembly := Level.Debug
 
 autoCompilerPlugins := true
 
@@ -15,7 +20,9 @@ val sparkVersion = "2.4.0"
 
 val liftVersion = "3.3.0"
 
-val log4jVersion = "latest.integration"
+val log4jVersion = "2.13.3"
+
+val circeVersion = "0.11.2"
 
 lazy val rootSettings = Seq(
   publishArtifact := false,
@@ -37,29 +44,35 @@ lazy val commonSettings = Seq(
 
   assemblyMergeStrategy in assembly := {
     case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-    case PathList("org", "apache", "hadoop", "yarn", "factories", "package-info.class")         => MergeStrategy.discard
+    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
+    case PathList("javax", "inject", xs @ _*) => MergeStrategy.first
+    case PathList("org", "aopalliance", xs @ _*) => MergeStrategy.first
+    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.rename
+    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.rename
+    case PathList("org", "apache", "hadoop", "yarn", "factories", "package-info.class") => MergeStrategy.discard
     case PathList("org", "apache", "hadoop", "yarn", "providers", "package-info.class")         => MergeStrategy.discard
+    case PathList("org", "apache", "hadoop", "yarn", "factory", "providers", "package-info.class") => MergeStrategy.discard
     case PathList("org", "apache", "hadoop", "yarn", "util", "package-info.class")         => MergeStrategy.discard
     case PathList("org", "apache", "spark", "unused", "UnusedStubClass.class")         => MergeStrategy.first
     case "META-INF/ECLIPSEF.RSA" => MergeStrategy.last
     case "META-INF/mailcap" => MergeStrategy.last
     case "META-INF/mimetypes.default" => MergeStrategy.last
     case "plugin.properties" => MergeStrategy.last
+    case "git.properties" => MergeStrategy.last
     case "log4j.properties" => MergeStrategy.last
     case "BUILD" => MergeStrategy.discard
     case "logback.xml" => MergeStrategy.first
     case "default" => MergeStrategy.last
     case "rootdoc.txt"     => MergeStrategy.discard
-    case other: Any => MergeStrategy.defaultMergeStrategy(other)
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
   },
 
-  //example of excluded jars
-  assemblyExcludedJars in assembly := {
-    val cp = (fullClasspath in assembly).value
-    cp filter {
-      _.data.getName.matches(".*finatra-scalap-compiler-deps.*")
-    }
-  },
+  assemblyShadeRules in assembly := Seq(
+    ShadeRule.rename("org.apache.commons.collections.**" -> "shadedstuff.collections.@1")
+      .inLibrary("commons-collections" % "commons-collections" % "3.2.2")
+  ),
 )
 
 lazy val rootProject = project.in(file("."))
@@ -72,20 +85,26 @@ lazy val rootProject = project.in(file("."))
 lazy val loader = project.in(file("loader"))
   .settings(commonSettings: _*)
   .settings(
+    mainClass in assembly := Some("com.target.loader.Loader"),
     mainClass in Compile := Some("com.target.loader.Loader"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
     name := "loader",
     assemblyJarName in assembly := "loader.jar",
     libraryDependencies ++= Seq(
       "org.scalaj" %% "scalaj-http" % "2.4.2",
-      "org.apache.spark" %% "spark-core" % sparkVersion,
+      ("org.apache.spark" %% "spark-core" % sparkVersion)
+        .exclude("commons-beanutils", "commons-beanutils"),
+//        exclude("commons-collections", "commons-collections").
+//        exclude("org.mortbay.jetty", "servlet-api").
+//        exclude("commons-logging", "commons-logging").
+//        exclude("com.esotericsoftware.minlog", "minlog"),
       "org.apache.spark" %% "spark-sql" % sparkVersion,
       "junit" % "junit" % "4.13.1",
-      "io.circe" %% "circe-core" % "latest.integration" withSources(),
-      "io.circe" %% "circe-generic" % "latest.integration" withSources(),
-      "io.circe" %% "circe-parser" % "latest.integration" withSources(),
-      "io.circe" %% "circe-yaml" % "latest.integration" withSources(),
-      "io.circe" %% "circe-generic-extras" % "latest.integration",
+      "io.circe" %% "circe-core" % circeVersion withSources(),
+      "io.circe" %% "circe-generic" % circeVersion withSources(),
+      "io.circe" %% "circe-parser" % circeVersion withSources(),
+      "io.circe" %% "circe-yaml" % "0.11.0-M1" withSources(),
+      "io.circe" %% "circe-generic-extras" % circeVersion,
       "org.yaml" % "snakeyaml" % "latest.integration",
       "com.lihaoyi" %% "scalatags" % "0.6.7",
       "com.sun.mail" % "javax.mail" % "1.6.2",
@@ -101,6 +120,7 @@ lazy val http = (project in file("HttpScalatra"))
   .settings(commonSettings: _*)
   .settings(
     name := "http",
+    mainClass in assembly := Some("Main"),
     mainClass in Compile := Some("Main"),
     assemblyJarName in assembly := "http.jar",
     libraryDependencies ++= Seq(
@@ -120,15 +140,16 @@ lazy val saver = (project in file("saver"))
   .settings(commonSettings: _*)
   .settings(
     name := "saver",
+    mainClass in assembly := Some("com.target.loader.Saver"),
     mainClass in Compile := Some("com.target.loader.Saver"),
     assemblyJarName in assembly := "saver.jar",
     libraryDependencies ++= Seq(
       "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql" % sparkVersion withSources(),
-      "io.circe" %% "circe-core" % "latest.integration" withSources(),
-      "io.circe" %% "circe-generic" % "latest.integration" withSources(),
-      "io.circe" %% "circe-parser" % "latest.integration" withSources(),
+      "io.circe" %% "circe-core" % circeVersion withSources(),
+      "io.circe" %% "circe-generic" % circeVersion withSources(),
+      "io.circe" %% "circe-parser" % circeVersion withSources(),
       "org.apache.spark" %% "spark-avro" % "2.4.7",
       "org.apache.avro" % "avro" % "1.10.0",
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
