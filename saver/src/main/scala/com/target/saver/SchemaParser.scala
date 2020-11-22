@@ -2,13 +2,12 @@ package com.target.saver
 
 import java.io
 
-import com.target.saver.Saver.{schema, spark}
-
 import scala.io.{BufferedSource, Source}
 import scala.util.{Failure, Success, Try}
 import org.apache.avro.Schema
 import org.apache.avro._
 import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.SparkSession
 
 import scala.reflect.io.File
 
@@ -44,7 +43,8 @@ object SchemaParser extends LazyLogging {
 
   def getSparkSchemaFromFile(filename: String): StructType = {
     val avroSchema = SchemaParser.getJsonStringFromFile(filename)
-    spark.read
+    SparkSession.builder().getOrCreate()
+      .read
       .format("avro")
       .option("avroSchema", avroSchema)
       .load()

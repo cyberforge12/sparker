@@ -28,12 +28,6 @@ object Saver extends App with LazyLogging {
           schema    path to AVRO-scheme file
           table     POSTGRES table name containing messages
   """
-  val spark = SparkSession
-    .builder()
-    .appName("Saver")
-    .config("spark.master", "local")
-    .getOrCreate()
-
 
   //TODO: removed saving and reading from file
   def getDFList(df: DataFrame): ListBuffer[(String, String, String, DataFrame, Int)] = {
@@ -50,7 +44,7 @@ object Saver extends App with LazyLogging {
       val date = row.getAs[String]("short_date")
       val timestamp = row.getAs[java.sql.Timestamp]("date").toString
       val id = row.getAs[Int]("id")
-      val df = Try(spark.read.json(tmpJsonFile))
+      val df = Try(SparkSession.builder().getOrCreate().read.json(tmpJsonFile))
       df match {
         case Success(value) => listDF += ((timestamp, date, req_body, value, id))
         case Failure(exception) => logger.error(exception.getMessage)
@@ -69,6 +63,7 @@ object Saver extends App with LazyLogging {
   def saveDfToParquet(date: String, srcString: String, incDF: DataFrame) = {
     logger.info("Preparing parquet-file...")
     val uuid = java.util.UUID.randomUUID.toString
+    val spark = SparkSession.builder().getOrCreate()
     import spark.implicits._
     val srcDF = List((uuid, date, srcString)).toDF("uuid", "date", "req_body")
 
@@ -111,8 +106,7 @@ object Saver extends App with LazyLogging {
 
     val listDF = getDFList(df)
     for (i <- listDF) {
-//      val validDF = fixDfTypes(i._3)
-      val validDF = i._4
+      val validDF = fixDfTypes(i._4)
       Try(DataFrameSchemaChecker.validateSchema(validDF, schema)) match {
         case Success(value) =>
           saveDfToParquet(i._2, i._3, validDF)
@@ -122,22 +116,16 @@ object Saver extends App with LazyLogging {
     }
   }
 
-  def getDfFromJsonString(json: String) = {
-    logger.info("Getting dataframe from json string")
-    import spark.implicits._
-    val ds = Seq(json)
-    spark.read
-      .json(ds.toDS())
-  }
-
   def getDfFromJsonFile(jsonFilename: String): DataFrame = {
     logger.info("Getting dataframe from json file")
-    spark.read
+    SparkSession.builder().getOrCreate()
+      .read
       .json(jsonFilename)
   }
 
   def getDfFromJsonStringAvro(json: String) = {
     logger.info("Getting dataframe from json string")
+    val spark = SparkSession.builder().getOrCreate()
     import spark.implicits._
     val avro = Json.parseJson(json)
     val ds = Seq(json)
@@ -155,18 +143,23 @@ object Saver extends App with LazyLogging {
           case "dbh" => conn_str = i(1)
           case "schema" => schema = i(1)
           case "table" => table = i(1)
-          case _ => ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
+          case _ => {
+            ErrorHandler.info(new IllegalArgumentException("Incorrect option: " + i(0)))
+            sys.exit(0)
+          }
         }
       }
-      else
-        ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
+      else {
+        ErrorHandler.info(new IllegalArgumentException("Incorrect option: " + i(0)))
+        sys.exit(0)
+      }
     }
     logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + schema + ", table=" + table)
   }
 
   private def getDataframeFromDatabase: DataFrame = {
 
-    val jdbc_reader = spark.read
+    val jdbc_reader = SparkSession.builder().getOrCreate().read
       .format("jdbc")
       .option("url", conn_str)
       .option("dbtable", s"(SELECT id, date, req_body FROM $table WHERE status=0) tmp")
@@ -181,11 +174,15 @@ object Saver extends App with LazyLogging {
     }
   }
 
-  spark.sparkContext.setLogLevel("ERROR")
 
   if (args.length == 3) {
     logger.info("Running Saver")
     parseArgs(args)
+    SparkSession.builder()
+      .appName("Saver")
+      .config("spark.master", "local")
+      .getOrCreate()
+      .sparkContext.setLogLevel("ERROR")
 
     val df = getDataframeFromDatabase
     validateRecords(df, SchemaParser.getSparkSchemaFromFile(schema))

@@ -140,8 +140,8 @@ lazy val saver = (project in file("saver"))
   .settings(commonSettings: _*)
   .settings(
     name := "saver",
-    mainClass in assembly := Some("com.target.loader.Saver"),
-    mainClass in Compile := Some("com.target.loader.Saver"),
+    mainClass in assembly := Some("com.target.saver.Saver"),
+    mainClass in Compile := Some("com.target.saver.Saver"),
     assemblyJarName in assembly := "saver.jar",
     libraryDependencies ++= Seq(
       "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
@@ -156,7 +156,7 @@ lazy val saver = (project in file("saver"))
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
 //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
-),
+    ),
     dependencyOverrides ++= {
       Seq(
         "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7.1",

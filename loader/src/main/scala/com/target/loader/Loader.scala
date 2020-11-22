@@ -58,7 +58,7 @@ object Loader extends LazyLogging {
     }
     else {
       print(usage)
-      sys.exit(1)
+      sys.exit(0)
     }
     val valid_map = new ConfigParser(validate)
 
@@ -73,11 +73,9 @@ object Loader extends LazyLogging {
     val df_reader = spark.read.format("csv")
       .option("sep", ";")
       .option("header", "true")
-    //Надо завести
     var df1: DataFrame = spark.emptyDataFrame
     var df2: DataFrame = spark.emptyDataFrame
     var resFrame: DataFrame = spark.emptyDataFrame
-    //А как - хз
     try {
       df1 = DataframeValidator.validateEvents(df_reader.load(events))
     }
@@ -93,6 +91,5 @@ object Loader extends LazyLogging {
     }
     if (!df1.isEmpty && !df2.isEmpty) resFrame = DataframeValidator.validate(df1, df2)
     resFrame.toJSON.foreach(Sender.send(_))
-    //Sender.send("111")
   }
 }
