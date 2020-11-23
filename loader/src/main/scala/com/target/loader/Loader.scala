@@ -70,7 +70,8 @@ object Loader extends LazyLogging {
 
     spark.sparkContext.setLogLevel("ERROR")
 
-    val df_reader = spark.read.format("csv")
+    val df_reader = spark.read
+      .format("com.databricks.spark.csv")
       .option("sep", ";")
       .option("header", "true")
     var df1: DataFrame = spark.emptyDataFrame

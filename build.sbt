@@ -12,7 +12,7 @@ ThisBuild / scalaVersion := "2.11.12"
 
 cancelable in Global := true
 
-logLevel in assembly := Level.Debug
+//logLevel in assembly := Level.Debug
 
 autoCompilerPlugins := true
 
@@ -32,8 +32,7 @@ lazy val rootSettings = Seq(
 lazy val commonSettings = Seq(
 
   // We use a common directory for all of the artifacts
-  assemblyOutputPath in assembly := baseDirectory.value /
-    "assembly" / (name.value + "-" + version.value + ".jar"),
+  assemblyOutputPath in assembly := file(name.value + "-" + version.value + ".jar"),
 
   // This is really a one-time, global setting if all projects
   // use the same folder, but should be here if modified for
@@ -43,12 +42,15 @@ lazy val commonSettings = Seq(
   test in assembly := {},
 
   assemblyMergeStrategy in assembly := {
-    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.first
-    case PathList("javax", "inject", xs @ _*) => MergeStrategy.first
+    case PathList("javax", "servlet", xs @ _*) => MergeStrategy.last
+    case PathList("javax", "inject", xs @ _*) => MergeStrategy.last
+    case PathList("javax", "ws", xs @ _*) => MergeStrategy.last
     case PathList("org", "aopalliance", xs @ _*) => MergeStrategy.first
-    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.rename
-    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.rename
+    case PathList("org", "apache", "commons", "collections", xs @ _*) => MergeStrategy.last
+    case PathList("org", "apache", "commons", "beanutils", xs @ _*) => MergeStrategy.last
+    case PathList("org", "apache", "commons", "logging", xs @ _*) => MergeStrategy.last
+    case PathList("com", "sun", "research", xs @ _*) => MergeStrategy.last
+    case PathList("jersey", "repackaged", xs @ _*) => MergeStrategy.last
     case PathList("org", "apache", "hadoop", "yarn", "factories", "package-info.class") => MergeStrategy.discard
     case PathList("org", "apache", "hadoop", "yarn", "providers", "package-info.class")         => MergeStrategy.discard
     case PathList("org", "apache", "hadoop", "yarn", "factory", "providers", "package-info.class") => MergeStrategy.discard
@@ -57,6 +59,8 @@ lazy val commonSettings = Seq(
     case "META-INF/ECLIPSEF.RSA" => MergeStrategy.last
     case "META-INF/mailcap" => MergeStrategy.last
     case "META-INF/mimetypes.default" => MergeStrategy.last
+    case PathList("META-INF", "MANIFEST>MF") => MergeStrategy.concat
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
     case "plugin.properties" => MergeStrategy.last
     case "git.properties" => MergeStrategy.last
     case "log4j.properties" => MergeStrategy.last
@@ -71,8 +75,15 @@ lazy val commonSettings = Seq(
 
   assemblyShadeRules in assembly := Seq(
     ShadeRule.rename("org.apache.commons.collections.**" -> "shadedstuff.collections.@1")
-      .inLibrary("commons-collections" % "commons-collections" % "3.2.2")
+      .inLibrary("commons-collections" % "commons-collections" % "3.2.2"),
   ),
+  dependencyOverrides ++= {
+    Seq(
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7.1",
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.7",
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.6.7"
+    )
+  },
 )
 
 lazy val rootProject = project.in(file("."))
@@ -112,6 +123,8 @@ lazy val loader = project.in(file("loader"))
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
+      //required to avoid dependency conflicts. See: https://stackoverflow.com/questions/17265002/hadoop-no-filesystem-for-scheme-file/27532248#27532248
+      "org.apache.hadoop" % "hadoop-hdfs" % "3.2.1",
 //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
