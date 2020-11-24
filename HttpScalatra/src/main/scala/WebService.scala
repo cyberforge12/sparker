@@ -1,6 +1,7 @@
 import org.scalatra.ScalatraServlet
 import java.sql.{Connection, DriverManager, ResultSet}
 
+import Main.conn_st
 import net.liftweb.json._
 
 class WebService extends ScalatraServlet with LazyLogging {
@@ -14,8 +15,8 @@ class WebService extends ScalatraServlet with LazyLogging {
     val jValue = parse(jsonString)
     //val stock = jValue.extract[Stock]
 
-    val con_st = "jdbc:postgresql://localhost:5432/task?user=postgres"
-    val conn = DriverManager.getConnection(con_st)
+    //val con_st = "jdbc:postgresql://localhost:5432/task?user=postgres"
+    val conn = DriverManager.getConnection(conn_st)
     try {
       val prep = conn.prepareStatement("INSERT INTO task (status, req_body) VALUES (?, ?) ")
       prep.setInt(1, 0)
