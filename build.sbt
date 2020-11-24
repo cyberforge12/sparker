@@ -4,11 +4,9 @@ import sbtassembly.AssemblyPlugin.autoImport.{MergeStrategy, PathList}
 
 import scala.Seq
 
-ThisBuild / organization := "com.target"
+organization := "com.target"
 
-ThisBuild / version      := "1.0.0"
-
-ThisBuild / scalaVersion := "2.11.12"
+version      := "1.0.0"
 
 cancelable in Global := true
 
@@ -30,6 +28,7 @@ lazy val rootSettings = Seq(
 )
 
 lazy val commonSettings = Seq(
+  scalaVersion := "2.11.11",
 
   // We use a common directory for all of the artifacts
   assemblyOutputPath in assembly := file(name.value + "-" + version.value + ".jar"),
@@ -75,22 +74,22 @@ lazy val commonSettings = Seq(
 
   assemblyShadeRules in assembly := Seq(
     ShadeRule.rename("org.apache.commons.collections.**" -> "shadedstuff.collections.@1")
-      .inLibrary("commons-collections" % "commons-collections" % "3.2.2"),
+      .inLibrary("commons-collections" % "commons-collections" % "3.2.2")
   ),
   dependencyOverrides ++= {
-    Seq(
+    Set(
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7.1",
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.7",
       "com.fasterxml.jackson.core" % "jackson-core" % "2.6.7"
     )
-  },
+  }
 )
 
 lazy val rootProject = project.in(file("."))
   .settings(rootSettings: _*)
   .aggregate(http, loader,saver)
   .settings(
-    name := "sparker",
+    name := "sparker"
   )
 
 lazy val loader = project.in(file("loader"))
@@ -124,7 +123,7 @@ lazy val loader = project.in(file("loader"))
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
       //required to avoid dependency conflicts. See: https://stackoverflow.com/questions/17265002/hadoop-no-filesystem-for-scheme-file/27532248#27532248
-      "org.apache.hadoop" % "hadoop-hdfs" % "3.2.1",
+      "org.apache.hadoop" % "hadoop-hdfs" % "3.2.1"
 //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
@@ -144,7 +143,7 @@ lazy val http = (project in file("HttpScalatra"))
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
-      "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion
 //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
@@ -167,11 +166,11 @@ lazy val saver = (project in file("saver"))
       "org.apache.avro" % "avro" % "1.10.0",
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
-      "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
+      "org.apache.logging.log4j" % "log4j-web" % log4jVersion
 //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     ),
     dependencyOverrides ++= {
-      Seq(
+      Set(
         "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7.1",
         "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.7",
         "com.fasterxml.jackson.core" % "jackson-core" % "2.6.7"
