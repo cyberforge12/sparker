@@ -1,6 +1,7 @@
 package com.target.loader
 
 import java.util
+import java.util.LinkedHashMap
 import java.util.Properties
 
 import org.apache.log4j.PropertyConfigurator
@@ -8,6 +9,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.collection.JavaConversions.mapAsScalaMap
 import scala.util.{Failure, Success, Try}
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 object Loader extends LazyLogging {
 
@@ -63,11 +66,16 @@ object Loader extends LazyLogging {
       sys.exit(0)
     }
     val configMap = new ConfigParser(validate).configLinkedHashMap
-    val validateMap = configMap.getOrDefault("validate", "").asInstanceOf[util.LinkedHashMap[String, Object]]
-    val eventsMap = validateMap.getOrDefault("event", "").asInstanceOf[util.LinkedHashMap[String, Object]]
-    val factsMap = validateMap.getOrDefault("ext_fact", "").asInstanceOf[util.LinkedHashMap[String, Object]]
-    val eventDt_map = eventsMap.getOrDefault("event_dt", "").asInstanceOf[util.LinkedHashMap[String, Object]]
-    println(eventDt_map)
+
+    def getColumnParams(config: util.LinkedHashMap[String, Object], table: String, column: String): util
+    .LinkedHashMap[String, String] = {
+      val validateMap = configMap.getOrDefault("validate", "").asInstanceOf[util.LinkedHashMap[String, Object]]
+      val tableMap = validateMap.getOrDefault(table, "").asInstanceOf[util.LinkedHashMap[String, Object]]
+      val columnMap = tableMap.getOrDefault(column, "").asInstanceOf[util.LinkedHashMap[String, String]]
+      columnMap
+    }
+
+    val columnParams = getColumnParams(configMap, "event", "event_dt")
 
     val spark = SparkSession
       .builder()
