@@ -1,10 +1,12 @@
 package com.target.loader
 
+import java.util
 import java.util.Properties
 
 import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import scala.collection.JavaConversions.mapAsScalaMap
 import scala.util.{Failure, Success, Try}
 
 object Loader extends LazyLogging {
@@ -60,7 +62,12 @@ object Loader extends LazyLogging {
       print(usage)
       sys.exit(0)
     }
-    val valid_map = new ConfigParser(validate)
+    val configMap = new ConfigParser(validate).configLinkedHashMap
+    val validateMap = configMap.getOrDefault("validate", "").asInstanceOf[util.LinkedHashMap[String, Object]]
+    val eventsMap = validateMap.getOrDefault("event", "").asInstanceOf[util.LinkedHashMap[String, Object]]
+    val factsMap = validateMap.getOrDefault("ext_fact", "").asInstanceOf[util.LinkedHashMap[String, Object]]
+    val eventDt_map = eventsMap.getOrDefault("event_dt", "").asInstanceOf[util.LinkedHashMap[String, Object]]
+    println(eventDt_map)
 
     val spark = SparkSession
       .builder()
