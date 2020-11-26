@@ -65,17 +65,6 @@ object Loader extends LazyLogging {
       print(usage)
       sys.exit(0)
     }
-    val configMap = new ConfigParser(validate).configLinkedHashMap
-
-    def getColumnParams(config: util.LinkedHashMap[String, Object], table: String, column: String): util
-    .LinkedHashMap[String, String] = {
-      val validateMap = configMap.getOrDefault("validate", "").asInstanceOf[util.LinkedHashMap[String, Object]]
-      val tableMap = validateMap.getOrDefault(table, "").asInstanceOf[util.LinkedHashMap[String, Object]]
-      val columnMap = tableMap.getOrDefault(column, "").asInstanceOf[util.LinkedHashMap[String, String]]
-      columnMap
-    }
-
-    val columnParams = getColumnParams(configMap, "event", "event_dt")
 
     val spark = SparkSession
       .builder()
@@ -106,6 +95,7 @@ object Loader extends LazyLogging {
       case e: Exception => ErrorHandler.error(e)
     }
     if (!df1.isEmpty && !df2.isEmpty) resFrame = DataframeValidator.validate(df1, df2)
+
     resFrame.toJSON.foreach(Sender.send(_))
   }
 }
