@@ -1,11 +1,16 @@
 package com.target.loader
 
+import java.util
+import java.util.LinkedHashMap
 import java.util.Properties
 
 import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import scala.collection.JavaConversions.mapAsScalaMap
 import scala.util.{Failure, Success, Try}
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 object Loader extends LazyLogging {
 
@@ -60,7 +65,6 @@ object Loader extends LazyLogging {
       print(usage)
       sys.exit(0)
     }
-    val valid_map = new ConfigParser(validate)
 
     val spark = SparkSession
       .builder()
@@ -91,6 +95,7 @@ object Loader extends LazyLogging {
       case e: Exception => ErrorHandler.error(e)
     }
     if (!df1.isEmpty && !df2.isEmpty) resFrame = DataframeValidator.validate(df1, df2)
+
     resFrame.toJSON.foreach(Sender.send(_))
   }
 }

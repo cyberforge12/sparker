@@ -15,7 +15,7 @@ import scala.collection.mutable.Set
 import scala.collection.JavaConversions._
 
 class ConfigParser (filename: String) extends LazyLogging {
-  val configMap: java.util.LinkedHashMap[String, String] = parseToLinkedHashMap(filename)
+  val configMap: java.util.LinkedHashMap[String, Object] = parseToLinkedHashMap(filename)
   val eventKeyColumns: Set[String] = getKeyColumns(Globals.eventTable)
   val factsKeyColumns: Set[String] = getKeyColumns(Globals.factsTable)
   val configLinkedHashMap = parseToLinkedHashMap(filename)
@@ -67,7 +67,7 @@ class ConfigParser (filename: String) extends LazyLogging {
     yaml.replaceAll(pattern, "$1\'$3\'")
   }
 
-  private def parseToLinkedHashMap(filename: String): java.util.LinkedHashMap[String, String] = {
+  private def parseToLinkedHashMap(filename: String): java.util.LinkedHashMap[String, Object] = {
     val yaml = fixYaml(loadFromFile(filename))
     val reader = new Yaml()
     reader.load(yaml)
