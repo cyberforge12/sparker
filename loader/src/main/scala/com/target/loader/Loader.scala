@@ -1,11 +1,7 @@
 package com.target.loader
 import com.target.util.{ErrorHandler, LazyLogging}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-
-import scala.collection.JavaConversions.mapAsScalaMap
 import scala.util.{Failure, Success, Try}
-import scala.collection.JavaConverters._
-import scala.collection.mutable
 
 object Loader extends LazyLogging {
 
@@ -73,24 +69,10 @@ object Loader extends LazyLogging {
       .format("com.databricks.spark.csv")
       .option("sep", ";")
       .option("header", "true")
-    var df1: DataFrame = spark.emptyDataFrame
-    var df2: DataFrame = spark.emptyDataFrame
-    var resFrame: DataFrame = spark.emptyDataFrame
-    try {
-      df1 = DataframeValidator.validateEvents(df_reader.load(events))
-    }
-    catch {
-      case e: Exception => ErrorHandler.fatal(e)
-    }
 
-    try {
-      df2 = DataframeValidator.validateFacts(df_reader.load(facts))
-    }
-    catch {
-      case e: Exception => ErrorHandler.fatal(e)
-    }
-    if (!df1.isEmpty && !df2.isEmpty) resFrame = DataframeValidator.validate(df1, df2)
-
-    resFrame.toJSON.foreach(Sender.send(_))
+    val df1: DataFrame = Try(DataframeValidator.validateEvents(df_reader.load(events), spark)).getOrElse(spark.emptyDataFrame)
+    val df2: DataFrame = Try(DataframeValidator.validateFacts(df_reader.load(facts), spark)).getOrElse(spark.emptyDataFrame)
+    if (!df1.isEmpty && !df2.isEmpty) DataframeValidator.validate(df1, df2).toJSON.foreach(Sender.send(_))
+    else logger.info("Validation is Empty")
   }
 }

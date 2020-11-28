@@ -4,23 +4,25 @@ import com.target.util.LazyLogging
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 object DataframeValidator extends LazyLogging {
 
   val validator = new Validate()
-  val spark = SparkSession
-    .builder()
-    .appName("Loader")
-    .config("spark.master", "local")
-    .getOrCreate()
 
-  def validateFacts(df: DataFrame): DataFrame = {
+
+//Global lists for Spark's executor to build valid DFs
+  val validExtList = ListBuffer[Row]()
+  val errorExtList = ListBuffer[Row]()
+  val validEventList = ListBuffer[Row]()
+  val errorEventList = ListBuffer[Row]()
+
+
+  def validateFacts(df: DataFrame, spark: SparkSession): DataFrame = {
     logger.info(s"Validating facts dataframe")
     val schema = df.schema
-    var validExtList = ListBuffer[Row]()
-    var errorExtList = ListBuffer[Row]()
 
-    df.rdd.collect().foreach(parseRow(_, validExtList, errorExtList, validator.ext_vals))
+    df.foreach{row => parseRow(row, validExtList, errorExtList, validator.ext_vals)}
     val errorExtDf = spark.createDataFrame(spark.sparkContext.parallelize(errorExtList.toSeq), schema)
     errorExtDf.coalesce(1)
       .write
@@ -31,13 +33,11 @@ object DataframeValidator extends LazyLogging {
     spark.createDataFrame(spark.sparkContext.parallelize(validExtList.toSeq), schema)
   }
 
-  def validateEvents(df: DataFrame): DataFrame = {
+  def validateEvents(df: DataFrame, spark: SparkSession): DataFrame = {
     logger.info(s"Validating events dataframe")
     val schema = df.schema
-    var validEventList = ListBuffer[Row]()
-    var errorEventList = ListBuffer[Row]()
 
-    df.rdd.collect().foreach(parseRow(_, validEventList, errorEventList, validator.event_vals))
+    df.foreach{row => parseRow(row, validEventList, errorEventList, validator.event_vals)}
     val errorEventDf = spark.createDataFrame(spark.sparkContext.parallelize(errorEventList.toSeq), schema)
     errorEventDf.coalesce(1)
       .write
@@ -48,6 +48,7 @@ object DataframeValidator extends LazyLogging {
     spark.createDataFrame(spark.sparkContext.parallelize(validEventList.toSeq), schema)
   }
 
+  //Final validation for the task
   def validate(df1: DataFrame, df2: DataFrame)
   : DataFrame = {
     val result = df1.join(df2, "event_id")
@@ -56,9 +57,8 @@ object DataframeValidator extends LazyLogging {
     result.filter(result("type_operation") === "RurPayment").filter(result("event_channel") === "MOBILE")
   }
 
-  //после валидации дает уже отфильтрованный датафрейм.
 
-
+  //Parsin row to fullfil one of 2 lists - Valid/NonValid
   def parseRow(row: Row, validDf: ListBuffer[Row], errorList: ListBuffer[Row], mapVals: Map[String, validator.ValidateConfig]): Unit = {
     var error = 0
     val rowMap = row.getValuesMap[String](row.schema.fieldNames)
