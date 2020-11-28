@@ -4,7 +4,9 @@ import com.target.util.LazyLogging
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.mutable.ListBuffer
+import scala.sys.exit
 import scala.util.Try
+import scala.util.control.Breaks.break
 
 object DataframeValidator extends LazyLogging {
 
@@ -60,18 +62,17 @@ object DataframeValidator extends LazyLogging {
 
   //Parsin row to fullfil one of 2 lists - Valid/NonValid
   def parseRow(row: Row, validDf: ListBuffer[Row], errorList: ListBuffer[Row], mapVals: Map[String, validator.ValidateConfig]): Unit = {
-    var error = 0
+
     val rowMap = row.getValuesMap[String](row.schema.fieldNames)
     for (field <- rowMap.keys) {
       if (mapVals.contains(field)) {
         if (!validator.validateField(rowMap(field), mapVals(field))) {
-          error+= 1
           logger.info("ROW PARSING ERROR: " + field + " = " + rowMap(field))
+          return
         }
       }
     }
-    if (error == 0) validDf += row
-    else errorList += row
+    validDf += row
   }
 
 }
