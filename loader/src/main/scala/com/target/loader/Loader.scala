@@ -1,10 +1,5 @@
 package com.target.loader
-
-import java.util
-import java.util.LinkedHashMap
-import java.util.Properties
-
-import org.apache.log4j.PropertyConfigurator
+import com.target.util.{ErrorHandler, LazyLogging}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.collection.JavaConversions.mapAsScalaMap
@@ -34,11 +29,11 @@ object Loader extends LazyLogging {
           case "API" => api = "http://" + i(1)
           case "retry" => retry = i(1).toInt
           case "timeout" => timeout = i(1).toInt
-          case _ => ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
+          case _ => ErrorHandler.fatal(new IllegalArgumentException("Incorrect option: " + i(0)))
         }
       }
       else
-        ErrorHandler.error(new IllegalArgumentException("Incorrect option: " + i(0)))
+        ErrorHandler.fatal(new IllegalArgumentException("Incorrect option: " + i(0)))
     }
   }
 
@@ -85,14 +80,14 @@ object Loader extends LazyLogging {
       df1 = DataframeValidator.validateEvents(df_reader.load(events))
     }
     catch {
-      case e: Exception => ErrorHandler.error(e)
+      case e: Exception => ErrorHandler.fatal(e)
     }
 
     try {
       df2 = DataframeValidator.validateFacts(df_reader.load(facts))
     }
     catch {
-      case e: Exception => ErrorHandler.error(e)
+      case e: Exception => ErrorHandler.fatal(e)
     }
     if (!df1.isEmpty && !df2.isEmpty) resFrame = DataframeValidator.validate(df1, df2)
 

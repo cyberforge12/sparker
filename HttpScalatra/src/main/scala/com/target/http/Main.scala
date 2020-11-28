@@ -4,7 +4,9 @@ jdbc:postgresql://localhost:5432/task?user=postgres   OR any suitable jdbc
  */
 
 
-package http
+package com.target.http
+
+import com.target.util.LazyLogging
 
 object Main extends App with LazyLogging {
   val conn_st = args(0)

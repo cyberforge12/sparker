@@ -1,4 +1,5 @@
-package http
+package com.target.util
+
 import org.apache.logging.log4j.{LogManager, Logger}
 
 trait LazyLogging {

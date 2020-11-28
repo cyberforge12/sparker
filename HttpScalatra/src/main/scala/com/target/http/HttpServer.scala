@@ -1,4 +1,4 @@
-package http
+package com.target.http
 import javax.servlet.Servlet
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext

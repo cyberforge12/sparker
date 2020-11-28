@@ -1,13 +1,7 @@
 package com.target.loader
 
-import java.util
-
-import org.apache.spark
-import org.apache.spark.sql.SparkSession
-import org.apache.spark._
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.{DataFrame, Row}
+import com.target.util.LazyLogging
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.mutable.ListBuffer
 

@@ -1,11 +1,13 @@
+package com.target.http
 
-package http
-import org.scalatra.ScalatraServlet
 import java.sql.DriverManager
-import scala.util.{Try, Success, Failure}
 
-import Main.conn_st
+import com.target.http.Main.conn_st
+import com.target.util.LazyLogging
 import net.liftweb.json._
+import org.scalatra.ScalatraServlet
+
+import scala.util.{Failure, Success, Try}
 
 class WebService extends ScalatraServlet with LazyLogging {
   get("/") {

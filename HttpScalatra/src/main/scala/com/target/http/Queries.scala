@@ -1,6 +1,8 @@
-package http
+package com.target.http
 
 import java.sql.Connection
+
+import com.target.util.LazyLogging
 
 class Queries extends LazyLogging {
   def insertReqBody(body: String, conn: Connection) = {

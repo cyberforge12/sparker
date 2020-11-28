@@ -1,18 +1,15 @@
 package com.target.loader
 
-import java.util
-import scala.collection.JavaConverters._
-
-import org.yaml.snakeyaml.Yaml
+import com.target.util.{ErrorHandler, LazyLogging}
 import io.circe.yaml._
-import java.util.LinkedHashMap
-
 import io.circe.{Json, ParsingFailure}
+import org.yaml.snakeyaml.Yaml
 
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import scala.collection.mutable.Set
 import scala.io.{BufferedSource, Source}
 import scala.util.{Failure, Success, Try}
-import scala.collection.mutable.Set
-import scala.collection.JavaConversions._
 
 class ConfigParser (filename: String) extends LazyLogging {
   val configMap: java.util.LinkedHashMap[String, Object] = parseToLinkedHashMap(filename)
@@ -26,9 +23,6 @@ class ConfigParser (filename: String) extends LazyLogging {
       .asInstanceOf[java.util.LinkedHashMap[String, String]]
       .get(table).asInstanceOf[java.util.LinkedHashMap[String, String]]
   }
-
-
-  // IntelliJ Says this import isn't needed, but it won't compile without it.
 
   private def getKeyColumns(table: String): Set[String] = {
     val tableMap = configMap("validate")
@@ -50,7 +44,7 @@ class ConfigParser (filename: String) extends LazyLogging {
     Try {
       Source.fromFile(filename)
     } match {
-      case Failure(exception) => ErrorHandler.error(exception); sys.exit(0)
+      case Failure(exception) => ErrorHandler.fatal(exception); sys.exit(0)
       case Success(value) => bufferContentsAsString(value)
     }
   }
@@ -83,7 +77,7 @@ class ConfigParser (filename: String) extends LazyLogging {
     val json: Either[ParsingFailure, Json] = parser.parse(fixYaml(yaml))
     json match {
       case Right(b) => b
-      case Left(a) => ErrorHandler.error(new Exception(a)); sys.exit(1)
+      case Left(a) => ErrorHandler.fatal(new Exception(a)); sys.exit(1)
     }
   }
 }
