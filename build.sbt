@@ -133,8 +133,8 @@ lazy val http = (project in file("HttpScalatra"))
   .settings(commonSettings: _*)
   .settings(
     name := "http",
-    mainClass in assembly := Some("Main"),
-    mainClass in Compile := Some("Main"),
+    mainClass in assembly := Some("http.Main"),
+    mainClass in Compile := Some("http.Main"),
     assemblyJarName in assembly := "http.jar",
     libraryDependencies ++= Seq(
       "org.scalatra" %% "scalatra" % "2.5.4",
