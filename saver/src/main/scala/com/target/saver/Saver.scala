@@ -54,8 +54,8 @@ object Saver extends App with LazyLogging {
   }
 
   def fixDfTypes(df: DataFrame): DataFrame = {
-      df.withColumn("event_time", col("event_time").cast(LongType))
-        .withColumn("transaction_amount", col("transaction_amount").cast(LongType))
+    df.withColumn("event_time", col("event_time").cast(LongType))
+      .withColumn("transaction_amount", col("transaction_amount").cast(LongType))
   }
 
   //TODO: Уточнить у Игоря про разделение на слои и нужно ли создавать отдельные файлы под каждую запись
@@ -133,27 +133,6 @@ object Saver extends App with LazyLogging {
       .json(ds.toDS())
   }
 
-  private def getDataframeFromDatabase: DataFrame = {
-
-    val table = argsMap.getOrElse("table", "")
-
-    val jdbc_reader = SparkSession.builder().getOrCreate().read
-      .format("jdbc")
-      .option("url", argsMap.getOrElse("conn_str", ""))
-      .option("dbtable", s"(SELECT id, date, req_body FROM $table WHERE status=0) tmp")
-
-    Try(jdbc_reader.load()) match {
-      case Success(value) => {
-        logger.info("Successfully fetched " + value.count() + " records from database")
-        value.withColumn("short_date", date_format(col("date"), "yyyyMMdd"))
-      }
-      case Failure(exception) => {
-        ErrorHandler.error(exception)
-        sys.exit(1)
-      }
-    }
-  }
-
   val argsMap = {
     if (args.length == 3) {
       ArgsParser.parse(args)
@@ -165,11 +144,14 @@ object Saver extends App with LazyLogging {
   }
 
   val spark = SparkSession.builder()
-      .appName("Saver")
-      .config("spark.master", "local")
-      .getOrCreate()
-      .sparkContext.setLogLevel("ERROR")
+    .appName("Saver")
+    .config("spark.master", "local")
+    .getOrCreate()
 
-  val df = getDataframeFromDatabase
-    validateRecords(df, SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", "")))
+  val schema = SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", ""))
+  val df = DBHandler.getData(spark)
+  val dfChecked = DBHandler.checkSchema(spark, df, schema)
+  DBHandler.updateDatabase(dfChecked)
+  dfChecked.show()
+//  validateRecords(df, SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", "")))
 }
