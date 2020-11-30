@@ -2,14 +2,11 @@ package com.target.loader
 
 import java.util
 
-import scala.collection.JavaConverters._
-import com.target.loader.Loader.validate
-
 import scala.collection.JavaConversions.iterableAsScalaIterable
 
 class Validate {
 
-  val configMap = new ConfigParser(validate).configLinkedHashMap
+  val configMap = new ConfigParser(Loader.argsMap.getOrElse("validate", "")).configLinkedHashMap
 
 //Maps for 2 CSVs
   val event_vals = Map(

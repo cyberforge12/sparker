@@ -1,42 +1,13 @@
 package com.target.loader
-import com.target.util.{ErrorHandler, LazyLogging}
+import com.target.util.{ArgsParser, ErrorHandler, LazyLogging}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import scala.util.{Failure, Success, Try}
 
-object Loader extends LazyLogging {
+import scala.util.Try
 
-  var facts: String = ""
-  var events: String = ""
-  var validate: String = ""
-  var api: String = ""
-  var retry: Int = -1
-  var timeout: Int = -1
+object Loader extends App with LazyLogging {
 
-  def parseArgs(args: Array[String]): Unit = {
-
-    logger.info("Parsing CLI arguments")
-    val lst = args.map(_.split("="))
-    for (i <- lst) {
-      if (i.length == 2) {
-        i(0) match {
-          case "facts" => facts = i(1)
-          case "events" => events = i(1)
-          case "validate" => validate = i(1)
-          case "API" => api = "http://" + i(1)
-          case "retry" => retry = i(1).toInt
-          case "timeout" => timeout = i(1).toInt
-          case _ => ErrorHandler.fatal(new IllegalArgumentException("Incorrect option: " + i(0)))
-        }
-      }
-      else
-        ErrorHandler.fatal(new IllegalArgumentException("Incorrect option: " + i(0)))
-    }
-  }
-
-  def main(args: Array[String]): Unit = {
-
-    val usage =
-      """
+  val usage =
+    """
     Usage: Logger.jar args
 
         args (key=value ...):
@@ -48,31 +19,37 @@ object Loader extends LazyLogging {
           timeout   timout between retries
   """
 
+  val argsMap = {
     if (args.length == 6) {
       logger.info("Running Loader")
-      parseArgs(args)
+      ArgsParser.parse(args)
     }
     else {
       print(usage)
       sys.exit(0)
     }
-
-    val spark = SparkSession
-      .builder()
-      .appName("Loader")
-      .config("spark.master", "local")
-      .getOrCreate()
-
-    spark.sparkContext.setLogLevel("ERROR")
-
-    val df_reader = spark.read
-      .format("com.databricks.spark.csv")
-      .option("sep", ";")
-      .option("header", "true")
-
-    val df1: DataFrame = Try(DataframeValidator.validateEvents(df_reader.load(events), spark)).getOrElse(spark.emptyDataFrame)
-    val df2: DataFrame = Try(DataframeValidator.validateFacts(df_reader.load(facts), spark)).getOrElse(spark.emptyDataFrame)
-    if (!df1.isEmpty && !df2.isEmpty) DataframeValidator.validate(df1, df2).toJSON.foreach(Sender.send(_))
-    else logger.info("Validation is Empty")
   }
+
+  val spark = SparkSession
+    .builder()
+    .appName("Loader")
+    .config("spark.master", "local")
+    .getOrCreate()
+
+  spark.sparkContext.setLogLevel("ERROR")
+
+  val df_reader = spark.read
+    .format("com.databricks.spark.csv")
+    .option("sep", ";")
+    .option("header", "true")
+
+  val df1: DataFrame = Try(DataframeValidator.validateEvents(df_reader
+    .load(argsMap.getOrElse("events", "")), spark))
+    .getOrElse(spark.emptyDataFrame)
+  val df2: DataFrame = Try(DataframeValidator.validateFacts(df_reader
+    .load(argsMap.getOrElse("facts", "")), spark))
+    .getOrElse(spark.emptyDataFrame)
+  if (!df1.isEmpty && !df2.isEmpty) DataframeValidator.validate(df1, df2).toJSON.foreach(Sender.send(_))
+  else logger.info("Validation is Empty")
+
 }
