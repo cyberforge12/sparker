@@ -148,6 +148,10 @@ object Saver extends App with LazyLogging {
     .config("spark.master", "local")
     .getOrCreate()
 
+  val schema = SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", ""))
   val df = DBHandler.getData(spark)
-  validateRecords(df, SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", "")))
+  val dfChecked = DBHandler.checkSchema(spark, df, schema)
+  DBHandler.updateDatabase(dfChecked)
+  dfChecked.show()
+//  validateRecords(df, SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", "")))
 }
