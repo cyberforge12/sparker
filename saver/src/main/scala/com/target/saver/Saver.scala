@@ -92,12 +92,12 @@ object Saver extends App with LazyLogging {
       println("Success!")
     }
     catch {
-    case e: Exception => {
-      val prep = conn.prepareStatement("INSERT INTO task (status, err_msg) VALUES (?, ?) ")
-      prep.setInt(1, 2)
-      prep.setString(2, e.toString)
-      logger.info("Added error record to the database. Error: " + e.toString)
-    }
+      case e: Exception => {
+        val prep = conn.prepareStatement("INSERT INTO task (status, err_msg) VALUES (?, ?) ")
+        prep.setInt(1, 2)
+        prep.setString(2, e.toString)
+        logger.info("Added error record to the database. Error: " + e.toString)
+      }
     }
     finally {conn.close()}
   }
@@ -165,12 +165,14 @@ object Saver extends App with LazyLogging {
       .option("dbtable", s"(SELECT id, date, req_body FROM $table WHERE status=0) tmp")
 
     Try(jdbc_reader.load()) match {
-      case Success(value) =>
+      case Success(value) => {
         logger.info("Successfully fetched " + value.count() + " records from database")
         value.withColumn("short_date", date_format(col("date"), "yyyyMMdd"))
-      case Failure(exception) =>
+      }
+      case Failure(exception) => {
         ErrorHandler.error(exception)
         sys.exit(1)
+      }
     }
   }
 
