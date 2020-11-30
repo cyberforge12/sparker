@@ -3,6 +3,7 @@ package com.target.saver
 import java.io.{BufferedWriter, File, FileWriter}
 import java.sql.{Connection, DriverManager, ResultSet}
 
+import com.target.util.ArgsParser
 
 import scala.util.{Failure, Success, Try}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -16,15 +17,14 @@ import scala.collection.mutable.ListBuffer
 
 object Saver extends App with LazyLogging {
 
-  var conn_str: String = ""
-  var schema: String = ""
-  var table: String = ""
+  logger.info("Running Saver")
+
   val usage =
     """
     Usage: Saver.jar args
 
         args (key=value ...):
-          dbh       database connection string, including login/passwd
+          conn_str  database connection string, including login/passwd
           schema    path to AVRO-scheme file
           table     POSTGRES table name containing messages
   """
@@ -82,7 +82,7 @@ object Saver extends App with LazyLogging {
 
   def sendErrorToDatabse(id: Int) = {
     logger.info("Updating the record in the database with error code 2...")
-    val conn = DriverManager.getConnection(conn_str)
+    val conn = DriverManager.getConnection(argsMap.getOrElse("conn_str", ""))
     try {
       val prep = conn.prepareStatement("UPDATE task SET status = 2, err_msg = ? WHERE id = ?")
       prep.setString(1, "Invalid JSON")
@@ -133,35 +133,13 @@ object Saver extends App with LazyLogging {
       .json(ds.toDS())
   }
 
-  private def parseArgs(args: Array[String]): Unit = {
-
-    logger.info("Parsing CLI arguments")
-    val lst = args.map(_.split("=", 2))
-    for (i <- lst) {
-      if (i.length == 2) {
-        i(0) match {
-          case "dbh" => conn_str = i(1)
-          case "schema" => schema = i(1)
-          case "table" => table = i(1)
-          case _ => {
-            ErrorHandler.info(new IllegalArgumentException("Incorrect option: " + i(0)))
-            sys.exit(0)
-          }
-        }
-      }
-      else {
-        ErrorHandler.info(new IllegalArgumentException("Incorrect option: " + i(0)))
-        sys.exit(0)
-      }
-    }
-    logger.info("Parsed arguments as dbh=" + conn_str + ", scheme=" + schema + ", table=" + table)
-  }
-
   private def getDataframeFromDatabase: DataFrame = {
+
+    val table = argsMap.getOrElse("table", "")
 
     val jdbc_reader = SparkSession.builder().getOrCreate().read
       .format("jdbc")
-      .option("url", conn_str)
+      .option("url", argsMap.getOrElse("conn_str", ""))
       .option("dbtable", s"(SELECT id, date, req_body FROM $table WHERE status=0) tmp")
 
     Try(jdbc_reader.load()) match {
@@ -176,21 +154,22 @@ object Saver extends App with LazyLogging {
     }
   }
 
+  val argsMap = {
+    if (args.length == 3) {
+      ArgsParser.parse(args)
+    }
+    else {
+      print(usage)
+      sys.exit(0)
+    }
+  }
 
-  if (args.length == 3) {
-    logger.info("Running Saver")
-    parseArgs(args)
-    SparkSession.builder()
+  val spark = SparkSession.builder()
       .appName("Saver")
       .config("spark.master", "local")
       .getOrCreate()
       .sparkContext.setLogLevel("ERROR")
 
-    val df = getDataframeFromDatabase
-    validateRecords(df, SchemaParser.getSparkSchemaFromFile(schema))
-  }
-  else {
-    print(usage)
-    sys.exit(0)
-  }
+  val df = getDataframeFromDatabase
+    validateRecords(df, SchemaParser.getSparkSchemaFromFile(argsMap.getOrElse("schema", "")))
 }
