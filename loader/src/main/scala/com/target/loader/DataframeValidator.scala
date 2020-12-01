@@ -1,5 +1,6 @@
 package com.target.loader
 
+import com.target.loader.Globals.columnsForJson
 import com.target.util.LazyLogging
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
@@ -56,7 +57,8 @@ object DataframeValidator extends LazyLogging {
     val result = df1.join(df2, "event_id")
       .drop(df2.col("event_dt"))
       .drop(df2.col("ccaf_dt_load"))
-    result.filter(result("type_operation") === "RurPayment").filter(result("event_channel") === "MOBILE")
+    val removeHeaders = result.schema.fieldNames.diff(columnsForJson).toSeq
+    result.drop(removeHeaders:_*).filter(result("type_operation") === "RurPayment").filter(result("event_channel") === "MOBILE")
   }
 
 
