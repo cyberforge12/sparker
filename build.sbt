@@ -177,15 +177,11 @@ lazy val saver = (project in file("saver"))
       "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql" % sparkVersion withSources(),
-      "io.circe" %% "circe-core" % circeVersion withSources(),
-      "io.circe" %% "circe-generic" % circeVersion withSources(),
-      "io.circe" %% "circe-parser" % circeVersion withSources(),
       "org.apache.spark" %% "spark-avro" % "2.4.7",
       "org.apache.avro" % "avro" % "1.10.0",
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
-//      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     ),
     dependencyOverrides ++= {
       Seq(

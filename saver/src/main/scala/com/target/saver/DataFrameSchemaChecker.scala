@@ -1,5 +1,6 @@
 package com.target.saver
 
+import com.target.util.LazyLogging
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StructField, StructType}
 

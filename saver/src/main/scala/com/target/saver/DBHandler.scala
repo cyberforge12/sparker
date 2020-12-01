@@ -1,39 +1,16 @@
 package com.target.saver
 
-import java.sql.DriverManager
-
-import com.target.saver.Saver.{argsMap, logger}
-import io.circe.Json
-import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.{col, date_format, expr, schema_of_json, udf}
-import org.apache.spark.sql.types.StructType
+import com.target.saver.Saver.argsMap
+import com.target.util.{ErrorHandler, LazyLogging}
+import org.apache.spark.sql.functions.{col, date_format}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import io.circe.parser._
 
+import java.io.File
+import java.sql.DriverManager
+import scala.reflect.io.Directory
 import scala.util.{Failure, Success, Try}
 
 object DBHandler extends LazyLogging {
-
-  private def checkUDF(s: String, schema: StructType): Boolean = {
-    val json = parse(s) match {
-      case Right(b) => b
-    }
-    val keys = json.asObject match {
-      case Some(x) => x.keys.toList
-    }
-    for (col <- schema) {
-      if (!keys.contains(col.name)) {
-        return false
-      }
-    }
-    true
-  }
-
-  def checkSchema(sparkSession: SparkSession, dataFrame: DataFrame, schema: StructType): DataFrame = {
-    val check: UserDefinedFunction = udf(checkUDF(_: String, schema))
-    dataFrame
-      .withColumn("is_valid", check(col("req_body")))
-  }
 
   def getData(sparkSession: SparkSession): DataFrame = {
 
@@ -51,38 +28,52 @@ object DBHandler extends LazyLogging {
         value.createOrReplaceTempView("df")
         value.withColumn("short_date", date_format(col("date"), "yyyyMMdd"))
       }
-      case Failure(exception) => {
-        ErrorHandler.error(exception)
-        sys.exit(1)
-      }
+      case Failure(exception) => ErrorHandler.fatal(exception)
     }
   }
 
-  def updateDatabase(dataFrame: DataFrame) = {
-    val res = dataFrame.filter(col("is_valid").contains(false))
-      .select("id")
-      .collect()
-      .map(_.getInt(0).asInstanceOf[AnyRef])
-    sendErrorToDatabse(res)
+  def updateDatabase(records: Array[AnyRef], status: Int): Unit = {
+    if (records.length > 0) {
+      logger.info("Updating " + records.length + " records in the database with error code 2...")
+      val conn = DriverManager.getConnection(argsMap.getOrElse("conn_str", ""))
+      Try {
+        val prep = conn.prepareStatement("UPDATE task SET status = ?, err_msg = ? WHERE id = ANY (?)")
+        val array = conn.createArrayOf("int4", records)
+        prep.setInt(1, status)
+        prep.setString(2, "Invalid JSON")
+        prep.setArray(3, array)
+        prep.execute()
+        logger.info(prep.getUpdateCount + " records updated")
+      } match {
+        case Failure(e) => logger.info("Failed updating records in the database. Error: " + e.toString)
+      }
+      conn.close()
+    }
   }
 
-  private def sendErrorToDatabse(records: Array[AnyRef]) = {
-    logger.info("Updating " + records.length + " records in the database with error code 2...")
-    val conn = DriverManager.getConnection(argsMap.getOrElse("conn_str", ""))
-    try {
-      val prep = conn.prepareStatement("UPDATE ? SET status = 2, err_msg = ? WHERE id = ANY (?)")
-      val array = conn.createArrayOf("int4", records)
-      prep.setString(1, "Invalid JSON")
-      prep.setArray(2, array)
-      prep.execute()
-      logger.info(prep.getFetchSize + " records updated")
-    }
-    catch {
-      case e: Exception => {
-        logger.info("Failed updating records in the database. Error: " + e.toString)
-      }
-    }
-    finally {conn.close()}
+  def saveDfToParquet(df: DataFrame): Unit = {
+    val filename = "saver.parquet"
+    new Directory(new File(filename)).deleteRecursively()
+
+    logger.info(s"Writing to $filename...")
+
+    // SRC-layer
+    df.coalesce(1)
+      .select("id", "short_date", "req_body")
+      .write
+      .partitionBy("short_date")
+      .parquet(filename)
+
+    // INC-Layer
+    df.coalesce(1)
+      .drop("id", "req_body", "short_date")
+      .write
+      .mode("append")
+      .option("encoding", "UTF-16")
+      .option("charset", "UTF-16")
+      .parquet(filename)
+
+    logger.info(s"Done writing to $filename")
   }
 
 }
