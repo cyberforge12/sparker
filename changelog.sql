@@ -7,4 +7,3 @@ CREATE TABLE task (
                     status INT NOT NULL,
                     err_msg VARCHAR ( 50 ) DEFAULT NULL,
                     req_body TEXT DEFAULT NULL);
-                    );
