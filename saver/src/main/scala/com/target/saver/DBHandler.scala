@@ -34,13 +34,17 @@ object DBHandler extends LazyLogging {
 
   def updateDatabase(records: Array[AnyRef], status: Int): Unit = {
     if (records.length > 0) {
+      val message = status match {
+        case 1 => ""
+        case 2 => "Invalid JSON"
+      }
       logger.info("Updating " + records.length + " records in the database with error code 2...")
       val conn = DriverManager.getConnection(argsMap.getOrElse("conn_str", ""))
       Try {
         val prep = conn.prepareStatement("UPDATE task SET status = ?, err_msg = ? WHERE id = ANY (?)")
         val array = conn.createArrayOf("int4", records)
         prep.setInt(1, status)
-        prep.setString(2, "Invalid JSON")
+        prep.setString(2, message)
         prep.setArray(3, array)
         prep.execute()
         logger.info(prep.getUpdateCount + " records updated")
