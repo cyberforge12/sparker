@@ -33,14 +33,14 @@ https://spark.apache.org/docs/latest/sql-data-sources-avro.html
 Валидируем.
  - [x] Парсинг YAML. Обязательность полей, соответствие форматам и т.д. – правила в виде yml
  -файла, указаны не для всех полей, если для какого-то поля не указаны – не валидируем его. Смысл правил расписан в начале yml-файла в комментарии.
- - [ ] Если в какой-то строке невалидные значения – вся строка откладывается в отдельный файл error.csv.
- - [ ] Джойним (inner join) датафреймы event и ext_fact по полю event_id.
- - [ ] Полученный датафрейм фильтруем по двум условиям: type_operation = RurPayment и event_channel = MOBILE.
+ - [x] Если в какой-то строке невалидные значения – вся строка откладывается в отдельный файл error.csv.
+ - [x] Джойним (inner join) датафреймы event и ext_fact по полю event_id.
+ - [x] Полученный датафрейм фильтруем по двум условиям: type_operation = RurPayment и event_channel = MOBILE.
  - [x] Каждую строку полученного датафрейма (каждую транзакцию) сериализуем в JSON
  - [x] и отправляем на REST API второго модуля (Http-метод POST, в теле JSON).
- - [ ] Если не отправляется (connection refused
+ - [x] Если не отправляется (connection refused
   или какое-то такое исключение возникает), то ждем какое-то время и пытаемся ещё раз. Структура сообщения – плоский JSON, все поля на одном уровне.
- - [ ] Поля, которые должны быть в JSON-е: event_id,event_time,event_channel,sub_channel,event_type,sub_type,
+ - [x] Поля, которые должны быть в JSON-е: event_id,event_time,event_channel,sub_channel,event_type,sub_type,
  event_description,transaction_amount,transaction_sender_account_number,transaction_beneficiar_account_number,ccaf_dt_load,event_dt,
  issue_date_card_owner,number_dul,account_number_of_recipient,number_card_recepient,payer_card_number,recepient_bik,
  recepient_inn,recepient_fio,client_phone_number
