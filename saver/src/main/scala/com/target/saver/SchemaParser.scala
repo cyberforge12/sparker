@@ -27,9 +27,9 @@ object SchemaParser extends LazyLogging {
   }
 
   private def bufferContentsAsString(buffer: BufferedSource): String = {
-    val contents = buffer.mkString
+    val str = buffer.mkString
     buffer.close()
-    contents
+    str
   }
 
   private def loadFromFile(filename: String): String = {

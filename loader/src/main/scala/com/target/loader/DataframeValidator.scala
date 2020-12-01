@@ -5,9 +5,6 @@ import com.target.util.LazyLogging
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.mutable.ListBuffer
-import scala.sys.exit
-import scala.util.Try
-import scala.util.control.Breaks.break
 
 object DataframeValidator extends LazyLogging {
 
@@ -26,7 +23,7 @@ object DataframeValidator extends LazyLogging {
     val schema = df.schema
 
     df.foreach{row => parseRow(row, validExtList, errorExtList, validator.ext_vals)}
-    val errorExtDf = spark.createDataFrame(spark.sparkContext.parallelize(errorExtList.toSeq), schema)
+    val errorExtDf: DataFrame = spark.createDataFrame(spark.sparkContext.parallelize(errorExtList.toSeq), schema)
     errorExtDf.coalesce(1)
       .write
       .option("header","true")
@@ -41,7 +38,7 @@ object DataframeValidator extends LazyLogging {
     val schema = df.schema
 
     df.foreach{row => parseRow(row, validEventList, errorEventList, validator.event_vals)}
-    val errorEventDf = spark.createDataFrame(spark.sparkContext.parallelize(errorEventList.toSeq), schema)
+    val errorEventDf: DataFrame = spark.createDataFrame(spark.sparkContext.parallelize(errorEventList.toSeq), schema)
     errorEventDf.coalesce(1)
       .write
       .option("header","true")
@@ -52,12 +49,11 @@ object DataframeValidator extends LazyLogging {
   }
 
   //Final validation for the task
-  def validate(df1: DataFrame, df2: DataFrame)
-  : DataFrame = {
-    val result = df1.join(df2, "event_id")
+  def validate(df1: DataFrame, df2: DataFrame): DataFrame = {
+    val result: DataFrame = df1.join(df2, "event_id")
       .drop(df2.col("event_dt"))
       .drop(df2.col("ccaf_dt_load"))
-    val removeHeaders = result.schema.fieldNames.diff(columnsForJson).toSeq
+    val removeHeaders: Seq[String] = result.schema.fieldNames.diff(columnsForJson).toSeq
     result.drop(removeHeaders:_*).filter(result("type_operation") === "RurPayment").filter(result("event_channel") === "MOBILE")
   }
 
@@ -65,7 +61,7 @@ object DataframeValidator extends LazyLogging {
   //Parsin row to fullfil one of 2 lists - Valid/NonValid
   def parseRow(row: Row, validDf: ListBuffer[Row], errorList: ListBuffer[Row], mapVals: Map[String, validator.ValidateConfig]): Unit = {
 
-    val rowMap = row.getValuesMap[String](row.schema.fieldNames)
+    val rowMap: Map[String, String] = row.getValuesMap[String](row.schema.fieldNames)
     for (field <- rowMap.keys) {
       if (mapVals.contains(field)) {
         if (!validator.validateField(rowMap(field), mapVals(field))) {

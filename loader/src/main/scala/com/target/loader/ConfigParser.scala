@@ -1,10 +1,11 @@
 package com.target.loader
 
 import com.target.util.{ErrorHandler, LazyLogging}
+import io.circe.Json
 import io.circe.yaml._
-import io.circe.{Json, ParsingFailure}
 import org.yaml.snakeyaml.Yaml
 
+import java.util
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Set
@@ -15,22 +16,15 @@ class ConfigParser (filename: String) extends LazyLogging {
   val configMap: java.util.LinkedHashMap[String, Object] = parseToLinkedHashMap(filename)
   val eventKeyColumns: Set[String] = getKeyColumns(Globals.eventTable)
   val factsKeyColumns: Set[String] = getKeyColumns(Globals.factsTable)
-  val configLinkedHashMap = parseToLinkedHashMap(filename)
-  val configClasses = parseToClass(filename)
-
-  def getNullable(table: String) = {
-    val tableMap = configMap("validate")
-      .asInstanceOf[java.util.LinkedHashMap[String, String]]
-      .get(table).asInstanceOf[java.util.LinkedHashMap[String, String]]
-  }
+  val configLinkedHashMap: util.LinkedHashMap[String, Object] = parseToLinkedHashMap(filename)
+  val configClasses: Map[String, Any] = parseToClass(filename)
 
   private def getKeyColumns(table: String): Set[String] = {
-    val tableMap = configMap("validate")
+    configMap("validate")
       .asInstanceOf[java.util.LinkedHashMap[String, String]]
       .get(table)
       .asInstanceOf[java.util.LinkedHashMap[String, String]]
       .keySet().asScala
-    tableMap
   }
 
   private def bufferContentsAsString(buffer: BufferedSource): String = {
@@ -49,13 +43,6 @@ class ConfigParser (filename: String) extends LazyLogging {
     }
   }
 
-  def getNullable(config: Json, table: String): List[String] = {
-    val cursor = config.hcursor
-    val obj = config.asObject
-    val x = cursor.downField("validate").downField(table)
-    List[String]()
-  }
-
   private def fixYaml(yaml: String): String = {
     val pattern = "(.+match: )(\")(.+)(\")"
     yaml.replaceAll(pattern, "$1\'$3\'")
@@ -68,14 +55,12 @@ class ConfigParser (filename: String) extends LazyLogging {
   }
 
   private def parseToClass(filename: String): Map[String, Any] = {
-    val circeADT = new CirceParser(fixYaml(loadFromFile(filename)), this)
-    circeADT.value.tables
+    new CirceParser(fixYaml(loadFromFile(filename)), this).value.tables
   }
 
   def parseToJson(filename: String): Json = {
     val yaml = loadFromFile(filename)
-    val json: Either[ParsingFailure, Json] = parser.parse(fixYaml(yaml))
-    json match {
+    parser.parse(fixYaml(yaml)) match {
       case Right(b) => b
       case Left(a) => ErrorHandler.fatal(new Exception(a)); sys.exit(1)
     }

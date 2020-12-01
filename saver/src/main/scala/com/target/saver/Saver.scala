@@ -19,7 +19,7 @@ object Saver extends App with LazyLogging {
           table     POSTGRES table name containing messages
   """
 
-  val argsMap = {
+  val argsMap: Map[String, String] = {
     if (args.length == 3) {
       ArgsParser.parse(args)
     }
@@ -37,26 +37,26 @@ object Saver extends App with LazyLogging {
   def checkSchema(sparkSession: SparkSession, dataFrame: DataFrame, schema: StructType): Unit = {
 
     import sparkSession.implicits._
-    val res = dataFrame
+    val res: DataFrame = dataFrame
       .withColumn("value", from_json($"req_body", schema))
       .withColumn("short_date", date_format(col("date"), "yyyyMMdd"))
       .select("id", "short_date", "req_body", "value.*")
 
-    val fail = res.filter("event_id == null")
+    val fail: Array[AnyRef] = res.filter(col("event_id").isNull)
       .select("id")
       .collect()
       .map(_.getInt(0).asInstanceOf[AnyRef])
     DBHandler.updateDatabase(fail, 2)
 
-    val success = res.filter(col("event_id").isNotNull)
+    val success: DataFrame = res.filter(col("event_id").isNotNull)
     DBHandler.saveDfToParquet(success)
-    val successIDs = success.select("id")
+    val successIDs: Array[AnyRef] = success.select("id")
       .collect()
       .map(_.getInt(0).asInstanceOf[AnyRef])
     DBHandler.updateDatabase(successIDs, 1)
   }
 
-  val schema = SchemaParser.toStructType(argsMap.getOrElse("schema", ""))
-  val df = DBHandler.getData(spark)
+  val schema: StructType = SchemaParser.toStructType(argsMap.getOrElse("schema", ""))
+  val df: DataFrame = DBHandler.getData(spark)
   checkSchema(spark, df, schema)
 }

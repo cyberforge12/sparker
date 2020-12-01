@@ -7,7 +7,7 @@ object Sender extends LazyLogging {
 
   def send(str: String) = {
 
-    val result = Http("http://" + Loader.argsMap.getOrElse("API", "")).postData(str)
+    val result: HttpResponse[String] = Http("http://" + Loader.argsMap.getOrElse("API", "")).postData(str)
       .header("Content-Type", "application/json")
       .header("Charset", "UTF-8")
       .option(HttpOptions.readTimeout(Loader.argsMap.getOrElse("timeout", "10000").toInt)).asString

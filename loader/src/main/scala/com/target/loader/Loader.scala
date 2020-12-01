@@ -1,5 +1,5 @@
 package com.target.loader
-import com.target.util.{ArgsParser, ErrorHandler, LazyLogging}
+import com.target.util.{ArgsParser, LazyLogging}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.Try
@@ -19,7 +19,7 @@ object Loader extends App with LazyLogging {
           timeout   timout between retries
   """
 
-  val argsMap = {
+  val argsMap: Map[String, String] = {
     if (args.length == 6) {
       logger.info("Running Loader")
       ArgsParser.parse(args)
@@ -50,6 +50,6 @@ object Loader extends App with LazyLogging {
     .load(argsMap.getOrElse("facts", "")), spark))
     .getOrElse(spark.emptyDataFrame)
   if (!df1.isEmpty && !df2.isEmpty) DataframeValidator.validate(df1, df2).toJSON.foreach(Sender.send(_))
-  else logger.info("Validation is Empty")
+  else {logger.info("Validation is Empty")}
 
 }

@@ -6,8 +6,8 @@ object ArgsParser extends ArgsParser {
 
     logger.info("Parsing arguments...")
 
-    val argsList = args.map(_.split("=", 2))
-    val res = (for (i <- argsList) yield i(0) -> i(1)).toMap
+    val argsList: Array[Array[String]] = args.map(_.split("=", 2))
+    val res: Map[String, String] = (for (i <- argsList) yield i(0) -> i(1)).toMap
     logger.info("Parsed arguments as Map: \n" + res.toString)
     res
   }

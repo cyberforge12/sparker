@@ -6,10 +6,11 @@ import scala.collection.JavaConversions.iterableAsScalaIterable
 
 class Validate {
 
-  val configMap = new ConfigParser(Loader.argsMap.getOrElse("validate", "")).configLinkedHashMap
+  val configMap: util.LinkedHashMap[String, Object] = new ConfigParser(Loader.argsMap.getOrElse("validate", ""))
+    .configLinkedHashMap
 
 //Maps for 2 CSVs
-  val event_vals = Map(
+  val event_vals: Map[String, ValidateConfig] = Map(
     "event_id" -> ValidateConfig(getColumnParams(configMap, "event", "event_id")),
     "event_time" -> ValidateConfig(getColumnParams(configMap, "event", "event_time")),
     "event_channel" -> ValidateConfig(getColumnParams(configMap, "event", "event_channel")),
@@ -21,7 +22,9 @@ class Validate {
     "ccaf_dt_load" -> ValidateConfig(getColumnParams(configMap, "event", "ccaf_dt_load")),
     "event_dt" -> ValidateConfig(getColumnParams(configMap, "event", "event_dt")))
 
-  val ext_vals = Map("number_card_recepient" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "number_card_recepient")),
+  val ext_vals: Map[String, ValidateConfig] = Map("number_card_recepient" -> ValidateConfig(getColumnParams(configMap,
+    "ext_fact",
+    "number_card_recepient")),
     "payer_card_number" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "payer_card_number")),
     "recepient_bik" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "recepient_bik")),
     "recepient_inn" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "recepient_inn")),
@@ -40,14 +43,18 @@ class Validate {
       }
       return false
     }
-    if (vConf.nullable)  true
-    else false
+    if (vConf.nullable) {true}
+    else {false}
   }
 
   //так спокойнее
   def isNull(s: String) = {
-    if (s.toUpperCase().equals("NULL")) true
-    else false
+    if (s.toUpperCase().equals("NULL")) {
+      true
+    }
+    else {
+      false
+    }
   }
 
   //Parsing common function
@@ -62,10 +69,10 @@ class Validate {
   //Case class of Validating rules
   case class ValidateConfig(map: util.LinkedHashMap[String, String])  {
     val m: String = map.getOrDefault("match", "")
-    val nullable: Boolean = if (map.containsKey("nullable")) false else true
+    val nullable: Boolean = if (map.containsKey("nullable")) {false} else {true}
     val valueset: Set[String] = if (map.containsKey("valueset")) {
       map.get("valueset").asInstanceOf[util.ArrayList[String]].toSet
-    } else Set[String]()
+    } else {Set[String]()}
   }
 
 }

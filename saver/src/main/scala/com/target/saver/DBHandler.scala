@@ -6,7 +6,7 @@ import org.apache.spark.sql.functions.{col, date_format}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.io.File
-import java.sql.DriverManager
+import java.sql.{Connection, DriverManager}
 import scala.reflect.io.Directory
 import scala.util.{Failure, Success, Try}
 
@@ -14,8 +14,8 @@ object DBHandler extends LazyLogging {
 
   def getData(sparkSession: SparkSession): DataFrame = {
 
-    val table = argsMap.getOrElse("table", "")
-    val conn_str = Saver.argsMap.getOrElse("conn_str", "")
+    val table: String = argsMap.getOrElse("table", "")
+    val conn_str: String = Saver.argsMap.getOrElse("conn_str", "")
 
     val jdbc_reader = sparkSession.read
       .format("jdbc")
@@ -34,12 +34,12 @@ object DBHandler extends LazyLogging {
 
   def updateDatabase(records: Array[AnyRef], status: Int): Unit = {
     if (records.length > 0) {
-      val message = status match {
+      val message: String = status match {
         case 1 => ""
         case 2 => "Invalid JSON"
       }
       logger.info("Updating " + records.length + " records in the database with error code 2...")
-      val conn = DriverManager.getConnection(argsMap.getOrElse("conn_str", ""))
+      val conn: Connection = DriverManager.getConnection(argsMap.getOrElse("conn_str", ""))
       Try {
         val prep = conn.prepareStatement("UPDATE task SET status = ?, err_msg = ? WHERE id = ANY (?)")
         val array = conn.createArrayOf("int4", records)
@@ -49,6 +49,7 @@ object DBHandler extends LazyLogging {
         prep.execute()
         logger.info(prep.getUpdateCount + " records updated")
       } match {
+        case Success(value) => {}
         case Failure(e) => logger.info("Failed updating records in the database. Error: " + e.toString)
       }
       conn.close()
