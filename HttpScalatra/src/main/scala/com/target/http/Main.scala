@@ -10,7 +10,8 @@ import com.target.util.LazyLogging
 
 object Main extends App with LazyLogging {
   val conn_st = args(0)
-  val server = HttpServer.buildWebService(8080, classOf[WebService])
+  val certLocation = args(1)
+  val server = HttpServer.buildWebService(443, classOf[WebService])
   logger.info("Starting server")
   server.start()
   logger.info("Server started at " + server.getURI)
