@@ -140,6 +140,7 @@ lazy val loader = project.in(file("loader"))
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
       //required to avoid dependency conflicts. See: https://stackoverflow.com/questions/17265002/hadoop-no-filesystem-for-scheme-file/27532248#27532248
       "org.apache.hadoop" % "hadoop-hdfs" % "3.2.1",
+      "io.github.hakky54" % "sslcontext-kickstart" % "3.0.9"
     //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
@@ -161,7 +162,8 @@ lazy val http = (project in file("HttpScalatra"))
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
-//      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
+
+      //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
 

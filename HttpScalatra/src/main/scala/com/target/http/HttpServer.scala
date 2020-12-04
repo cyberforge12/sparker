@@ -1,5 +1,5 @@
 package com.target.http
-import com.target.http.Main.certLocation
+import com.target.http.Main.{certLocation, conn_st, servTrustLocation}
 import javax.servlet.Servlet
 import org.eclipse.jetty.server.{Connector, HttpConfiguration, HttpConnectionFactory, SecureRequestCustomizer, Server, ServerConnector, SslConnectionFactory}
 import org.eclipse.jetty.util.ssl.SslContextFactory
@@ -17,9 +17,16 @@ object HttpServer {
     val https = new HttpConfiguration()
     https.addCustomizer(new SecureRequestCustomizer())
     val sslContextFactory = new SslContextFactory()
+
     sslContextFactory.setKeyStorePath(certLocation)
-    sslContextFactory.setKeyStorePassword("serverpass")
-    sslContextFactory.setKeyManagerPassword("serverpass")
+    sslContextFactory.setKeyStorePassword("password")
+    sslContextFactory.setKeyManagerPassword("password")
+
+    sslContextFactory.setTrustStorePath(servTrustLocation)
+    sslContextFactory.setTrustStorePassword("password")
+    sslContextFactory.setNeedClientAuth(true)
+
+
     val sslConn = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"),
       new HttpConnectionFactory(https))
     sslConn.setPort(port)
