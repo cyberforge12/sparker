@@ -17,10 +17,11 @@ object Loader extends App with LazyLogging {
           API       REST API ipv4 address
           retry     maximum number of retries
           timeout   timout between retries
+          cacert    path to a keystore with trusted certificates
   """
 
   val argsMap: Map[String, String] = {
-    if (args.length == 6) {
+    if (args.length == 7) {
       logger.info("Running Loader")
       ArgsParser.parse(args)
     }
