@@ -1,9 +1,8 @@
 package com.target.loader
-import java.io.{File, FileInputStream}
-import java.net.http.HttpClient
-import java.security.{KeyStore, SecureRandom}
+import java.io.{ File, FileInputStream }
+import java.security.{ KeyStore, SecureRandom }
 
-import javax.net.ssl.{HttpsURLConnection, KeyManagerFactory, SSLContext, SSLSocketFactory, TrustManagerFactory}
+import javax.net.ssl.{ HttpsURLConnection, KeyManagerFactory, SSLContext, SSLSocketFactory, TrustManagerFactory }
 import com.target.util.LazyLogging
 import javax.net.SocketFactory
 import scalaj.http._
@@ -24,23 +23,22 @@ object Sender extends LazyLogging {
     sslContextFactory.setTrustStorePath("keystore/client_truststore.jks")
     sslContextFactory.setTrustStorePassword("password")
 
-    //^ оно вроде как должно работать но собирает null в итоге
+      //^ оно вроде как должно работать но собирает null в итоге
 
+      def getFactory(): SSLSocketFactory = {
+        val ks = KeyStore.getInstance("JKS")
 
-    def getFactory(): SSLSocketFactory = {
-      val ks = KeyStore.getInstance("JKS")
+        ks.load(new FileInputStream(new File("keystore/client_truststore.jks")), "password".toCharArray)
 
-      ks.load(new FileInputStream(new File("keystore/client_truststore.jks")), "password".toCharArray)
-
-      val kmf = KeyManagerFactory.getInstance("SunX509")
-      kmf.init(ks, "password".toCharArray)
-      val tmf = TrustManagerFactory.getInstance("SunX509")
-      tmf.init(ks)
-      //tmf.init(kss, null)
-      val context = SSLContext.getInstance("TLS")
-      context.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom())
-      context.getSocketFactory
-    }
+        val kmf = KeyManagerFactory.getInstance("SunX509")
+        kmf.init(ks, "password".toCharArray)
+        val tmf = TrustManagerFactory.getInstance("SunX509")
+        tmf.init(ks)
+        //tmf.init(kss, null)
+        val context = SSLContext.getInstance("TLS")
+        context.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom())
+        context.getSocketFactory
+      }
 
     //^ а как сюда серт с доступными именами добавить - хз
 
@@ -53,9 +51,6 @@ object Sender extends LazyLogging {
     logger.info("Reply from http API: \n" +
       result.headers.map(data => s"${data._1}: ${data._2.toString()}").mkString("\n"))
 
-
   }
-
-
 
 }
