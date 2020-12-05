@@ -28,6 +28,7 @@ class CirceParser(yamlString: String, config: ConfigParser) {
             v <- x.as[Map[String, Col]]
           } yield new Tab(v)
         }
+        case None => Left(DecodingFailure("Some decoder error", List()))
       }
     }
   }
@@ -42,14 +43,14 @@ class CirceParser(yamlString: String, config: ConfigParser) {
     }
   }
 
-  val json = yaml.parser.parse(yamlString)
+  val json: Either[ParsingFailure, Json] = yaml.parser.parse(yamlString)
 
-  val value = json
+  val value: Val = json
     .leftMap(err => err: Error)
     .flatMap(_.as[Val])
     .valueOr(throw _)
 
-  val configLink = config
+  val configLink: ConfigParser = config
 
   @JsonCodec
   case class Val(tables: Map[String, Tab]) {

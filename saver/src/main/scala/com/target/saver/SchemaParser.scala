@@ -1,48 +1,23 @@
 package com.target.saver
 
-import java.io
+import com.target.util.{ErrorHandler, LazyLogging}
+import org.apache.avro.Schema
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.StructType
 
 import scala.io.{BufferedSource, Source}
 import scala.util.{Failure, Success, Try}
-import org.apache.avro.Schema
-import org.apache.avro._
-import org.apache.spark.sql.types.{DataType, StructType}
-import org.apache.spark.sql.SparkSession
-
-import scala.reflect.io.File
 
 object SchemaParser extends LazyLogging {
 
-//  val file = new io.File(schemaString).toString
-//  val schemaSource = Source.fromFile(file).getLines.mkString
-//  val schemaFromJson = DataType.fromJson("{"data": "type"}").asInstanceOf[StructType]
-//  val schemaStructType = createStructType(schemaString)
-  logger.info("Sucessfully parsed schema file")
-
-
-  private def createStructType(schemaString: String) = {
-    DataType.fromJson(schemaString)
-  }
-
-  private def bufferContentsAsString(buffer: BufferedSource): String = {
-    val contents = buffer.mkString
-    buffer.close()
-    contents
-  }
-
-  def getJsonStringFromFile(filename: String): String = {
-    logger.info("Sucessfully parsed schema from " + filename + " to string")
-    loadFromFile(filename)
-  }
-
-  def getAvroSchemaFromFile(filename: String): Schema = {
+  def toAvro(filename: String): Schema = {
     logger.info("Sucessfully parsed schema from " + filename + " to avro.Schema")
     val str = loadFromFile(filename)
     createSchema(str)
   }
 
-  def getSparkSchemaFromFile(filename: String): StructType = {
-    val avroSchema = SchemaParser.getJsonStringFromFile(filename)
+  def toStructType(filename: String): StructType = {
+    val avroSchema = SchemaParser.loadFromFile(filename)
     SparkSession.builder().getOrCreate()
       .read
       .format("avro")
@@ -51,13 +26,19 @@ object SchemaParser extends LazyLogging {
       .schema
   }
 
+  private def bufferContentsAsString(buffer: BufferedSource): String = {
+    val str = buffer.mkString
+    buffer.close()
+    str
+  }
+
   private def loadFromFile(filename: String): String = {
     logger.info(s"Opening file: $filename")
     Try {
       Source.fromFile(filename)
     } match {
       case Failure(exception) =>
-        ErrorHandler.error(exception);
+        ErrorHandler.fatal(exception);
         sys.exit(1)
       case Success(value) => bufferContentsAsString(value)
     }

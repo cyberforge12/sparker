@@ -2,19 +2,15 @@ package com.target.loader
 
 import java.util
 
-import scala.collection.JavaConverters._
-import com.target.loader.Loader.validate
-
 import scala.collection.JavaConversions.iterableAsScalaIterable
 
 class Validate {
 
-  val configMap = new ConfigParser(validate).configLinkedHashMap
+  val configMap: util.LinkedHashMap[String, Object] = new ConfigParser(Loader.argsMap.getOrElse("validate", ""))
+    .configLinkedHashMap
 
-  //val columnParams = getColumnParams(configMap, "event", "event_dt")
-
-
-  val event_vals = Map(
+//Maps for 2 CSVs
+  val event_vals: Map[String, ValidateConfig] = Map(
     "event_id" -> ValidateConfig(getColumnParams(configMap, "event", "event_id")),
     "event_time" -> ValidateConfig(getColumnParams(configMap, "event", "event_time")),
     "event_channel" -> ValidateConfig(getColumnParams(configMap, "event", "event_channel")),
@@ -26,7 +22,9 @@ class Validate {
     "ccaf_dt_load" -> ValidateConfig(getColumnParams(configMap, "event", "ccaf_dt_load")),
     "event_dt" -> ValidateConfig(getColumnParams(configMap, "event", "event_dt")))
 
-  val ext_vals = Map("number_card_recepient" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "number_card_recepient")),
+  val ext_vals: Map[String, ValidateConfig] = Map("number_card_recepient" -> ValidateConfig(getColumnParams(configMap,
+    "ext_fact",
+    "number_card_recepient")),
     "payer_card_number" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "payer_card_number")),
     "recepient_bik" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "recepient_bik")),
     "recepient_inn" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "recepient_inn")),
@@ -36,6 +34,7 @@ class Validate {
     "event_dt" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "event_dt")),
     "issue_date_card_owner" -> ValidateConfig(getColumnParams(configMap, "ext_fact", "issue_date_card_owner")))
 
+  //validating field function
   def validateField(value: String, vConf: ValidateConfig): Boolean = {
     if (!value.toUpperCase.equals("NULL")) {
       if (vConf.valueset.isEmpty || vConf.valueset.contains(value)) {
@@ -44,15 +43,21 @@ class Validate {
       }
       return false
     }
-    if (vConf.nullable)  true
-    else false
+    if (vConf.nullable) {true}
+    else {false}
   }
 
+  //так спокойнее
   def isNull(s: String) = {
-    if (s.toUpperCase().equals("NULL")) true
-    else false
+    if (s.toUpperCase().equals("NULL")) {
+      true
+    }
+    else {
+      false
+    }
   }
 
+  //Parsing common function
   def getColumnParams(config: util.LinkedHashMap[String, Object], table: String, column: String): util
   .LinkedHashMap[String, String] = {
     val validateMap = configMap.getOrDefault("validate", "").asInstanceOf[util.LinkedHashMap[String, Object]]
@@ -61,28 +66,14 @@ class Validate {
     columnMap
   }
 
+  //Case class of Validating rules
   case class ValidateConfig(map: util.LinkedHashMap[String, String])  {
-    var m = ""
-    var nullable = true
-    var valueset: Set[String] = Set()
-    if (map.containsKey("match")) m = map.get("match")
-    if (map.containsKey("nullable")) nullable = false
-    if (map.containsKey("valueset")) {
-      val array = map.get("valueset").asInstanceOf[util.ArrayList[String]]
-      array.foreach(valueset += _)
-    }
+    val m: String = map.getOrDefault("match", "")
+    val nullable: Boolean = if (map.containsKey("nullable")) {false} else {true}
+    val valueset: Set[String] = if (map.containsKey("valueset")) {
+      map.get("valueset").asInstanceOf[util.ArrayList[String]].toSet
+    } else {Set[String]()}
   }
 
 }
-
-
-/*
-  case class Ext_fact(number_card_recepient: String, payer_card_number: String, recepient_bik: String,
-                      recepient_fio: String, recepeint_inn: String, client_phone_number: String,
-                      ccaf_dt_load: String, event_dt: String, issue_date_card_owner: String)
-
-
-
-   */
-
 

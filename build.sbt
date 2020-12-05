@@ -87,13 +87,28 @@ lazy val commonSettings = Seq(
 
 lazy val rootProject = project.in(file("."))
   .settings(rootSettings: _*)
-  .aggregate(http, loader,saver)
+  .aggregate(http, loader,saver, util)
   .settings(
     name := "sparker"
   )
 
+lazy val util = (project in file("util"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "util",
+    assemblyJarName in assembly := "utils.jar",
+    libraryDependencies ++= Seq(
+      "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
+      "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
+      "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
+      "com.github.scopt" % "scopt_2.11" % "3.7.1" withSources()
+    )
+  )
+
 lazy val loader = project.in(file("loader"))
   .settings(commonSettings: _*)
+  .dependsOn(util)
   .settings(
     mainClass in assembly := Some("com.target.loader.Loader"),
     mainClass in Compile := Some("com.target.loader.Loader"),
@@ -124,16 +139,18 @@ lazy val loader = project.in(file("loader"))
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
       //required to avoid dependency conflicts. See: https://stackoverflow.com/questions/17265002/hadoop-no-filesystem-for-scheme-file/27532248#27532248
       "org.apache.hadoop" % "hadoop-hdfs" % "3.2.1"
-//      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
+      "io.github.hakky54" % "sslcontext-kickstart" % "3.0.9"
+    //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
 
 lazy val http = (project in file("HttpScalatra"))
   .settings(commonSettings: _*)
+  .dependsOn(util)
   .settings(
     name := "http",
-    mainClass in assembly := Some("Main"),
-    mainClass in Compile := Some("Main"),
+    mainClass in assembly := Some("com.target.http.Main"),
+    mainClass in Compile := Some("com.target.http.Main"),
     assemblyJarName in assembly := "http.jar",
     libraryDependencies ++= Seq(
       "org.scalatra" %% "scalatra" % "2.5.4",
@@ -144,12 +161,14 @@ lazy val http = (project in file("HttpScalatra"))
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion
-//      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
+
+      //      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     )
   )
 
 lazy val saver = (project in file("saver"))
   .settings(commonSettings: _*)
+  .dependsOn(util)
   .settings(
     name := "saver",
     mainClass in assembly := Some("com.target.saver.Saver"),
@@ -159,15 +178,11 @@ lazy val saver = (project in file("saver"))
       "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
       "org.apache.spark" %% "spark-core" % sparkVersion,
       "org.apache.spark" %% "spark-sql" % sparkVersion withSources(),
-      "io.circe" %% "circe-core" % circeVersion withSources(),
-      "io.circe" %% "circe-generic" % circeVersion withSources(),
-      "io.circe" %% "circe-parser" % circeVersion withSources(),
       "org.apache.spark" %% "spark-avro" % "2.4.7",
       "org.apache.avro" % "avro" % "1.10.0",
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-web" % log4jVersion
-//      "org.apache.logging.log4j" % "log4j-to-slf4j" % log4jVersion,
     ),
     dependencyOverrides ++= {
       Set(
