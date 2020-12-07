@@ -9,8 +9,8 @@ import javax.net.ssl._
 
 object Sender extends LazyLogging {
 
-  def send(str: String) = {
-
+  def send(stringOld: String) = {
+    val str = "$" + stringOld
     System.setProperty("javax.net.debug", "all")
 
     val sslContextFactory = new SslContextFactory
