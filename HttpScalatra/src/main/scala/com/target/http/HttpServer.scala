@@ -38,7 +38,7 @@ object HttpServer {
       val socket = serverSocket.accept()
       val bufferSource = fromInputStream(socket.getInputStream).mkString
       val webSr = new WebService
-      if (bufferSource(0).toString.equals("$")) webSr.writeDB(bufferSource.substring(1))
+      if (bufferSource(0).equals('$')) webSr.writeDB(bufferSource.substring(1))
     }
   }
 

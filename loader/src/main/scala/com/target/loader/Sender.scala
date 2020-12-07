@@ -47,9 +47,8 @@ object Sender extends LazyLogging {
     socket.startHandshake()
 
     val out: PrintWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream)))
-    out.println("test")
-    out.println("test1")
-    out.println("test2")
+    out.print('$')
+    out.println(stringOld)
     out.flush()
     out.close()
 

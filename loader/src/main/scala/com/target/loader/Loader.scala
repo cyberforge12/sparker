@@ -8,7 +8,7 @@ object Loader extends App with LazyLogging {
 
   val usage =
     """
-    Usage: Logger.jar args
+    Usage: Loader.jar args
 
         args (key=value ...):
           facts     path to csv file with facts
@@ -19,8 +19,6 @@ object Loader extends App with LazyLogging {
           timeout   timout between retries
           cacert    path to a keystore with trusted certificates
   """
-
-  Sender.send(usage)
 
   val argsMap: Map[String, String] = {
     if (args.length == 7) {
