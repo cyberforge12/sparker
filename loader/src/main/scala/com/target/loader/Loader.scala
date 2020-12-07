@@ -20,6 +20,8 @@ object Loader extends App with LazyLogging {
           cacert    path to a keystore with trusted certificates
   """
 
+  Sender.send(usage)
+
   val argsMap: Map[String, String] = {
     if (args.length == 7) {
       logger.info("Running Loader")
