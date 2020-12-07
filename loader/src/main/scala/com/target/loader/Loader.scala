@@ -8,7 +8,7 @@ object Loader extends App with LazyLogging {
 
   val usage =
     """
-    Usage: Logger.jar args
+    Usage: Loader.jar args
 
         args (key=value ...):
           facts     path to csv file with facts
