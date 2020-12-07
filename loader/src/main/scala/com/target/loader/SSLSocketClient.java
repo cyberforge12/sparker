@@ -8,10 +8,8 @@ public class SSLSocketClient {
 
     public static void main(String[] args) throws Exception {
         try {
-            SSLSocketFactory factory =
-                    (SSLSocketFactory)SSLSocketFactory.getDefault();
-            SSLSocket socket =
-                    (SSLSocket)factory.createSocket("mail.ru", 443);
+            SSLSocketFactory factory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+            SSLSocket socket = (SSLSocket)factory.createSocket("127.0.0.1", 443);
 
             /*
              * send http request

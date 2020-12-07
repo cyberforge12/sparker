@@ -1,6 +1,5 @@
 package com.target.loader
 import java.io.{File, FileInputStream}
-import java.net.http.HttpClient
 import java.security.{KeyStore, SecureRandom}
 
 import javax.net.ssl.{HttpsURLConnection, KeyManagerFactory, SSLContext, SSLSocketFactory, TrustManagerFactory}

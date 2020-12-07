@@ -58,9 +58,10 @@ public class SSLEngineSimpleDemo {
      * including specific handshake messages, and might be best examined
      * after gaining some familiarity with this application.
      */
-    private static boolean debug = false;
+    private static boolean debug = true;
 
-    private SSLContext sslc;
+    private SSLContext serverSSLCtx;
+    private SSLContext clientSSLCtx;
 
     private SSLEngine clientEngine;     // client Engine
     private ByteBuffer clientOut;       // write side of clientEngine
@@ -81,8 +82,10 @@ public class SSLEngineSimpleDemo {
     /*
      * The following is to set up the keystores.
      */
-    private static String keyStoreFile = "keystore/server.jks";
-    private static String trustStoreFile = "keystore/client_truststore.jks";
+    private static String serverKeyStoreFile = "keystore/server.jks";
+    private static String serverTrustStoreFile = "keystore/server_truststore.jks";
+    private static String clientKeyStoreFile = "keystore/client.jks";
+    private static String clientTrustStoreFile = "keystore/client_truststore.jks";
     private static String passwd = "password";
 
     /*
@@ -104,25 +107,39 @@ public class SSLEngineSimpleDemo {
      */
     public SSLEngineSimpleDemo() throws Exception {
 
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        KeyStore ts = KeyStore.getInstance("PKCS12");
+        KeyStore serverKeystore = KeyStore.getInstance("PKCS12");
+        KeyStore serverTruststore = KeyStore.getInstance("PKCS12");
+        KeyStore clientKeystore = KeyStore.getInstance("PKCS12");
+        KeyStore clientTruststore = KeyStore.getInstance("PKCS12");
 
-        char[] passphrase = "password".toCharArray();
-
-        ks.load(new FileInputStream(keyStoreFile), passphrase);
-        ts.load(new FileInputStream(trustStoreFile), passphrase);
+        serverKeystore.load(new FileInputStream(serverKeyStoreFile), passwd.toCharArray());
+        serverTruststore.load(new FileInputStream(serverTrustStoreFile), passwd.toCharArray());
+        clientKeystore.load(new FileInputStream(clientKeyStoreFile), passwd.toCharArray());
+        clientTruststore.load(new FileInputStream(clientTrustStoreFile), passwd.toCharArray());
 
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        kmf.init(ks, passphrase);
+        kmf.init(serverKeystore, passwd.toCharArray());
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-        tmf.init(ts);
+        tmf.init(serverTruststore);
 
         SSLContext sslCtx = SSLContext.getInstance("TLS");
 
         sslCtx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
-        sslc = sslCtx;
+        serverSSLCtx = sslCtx;
+
+        KeyManagerFactory cl_kmf = KeyManagerFactory.getInstance("SunX509");
+        cl_kmf.init(clientKeystore, passwd.toCharArray());
+
+        TrustManagerFactory cl_tmf = TrustManagerFactory.getInstance("SunX509");
+        cl_tmf.init(clientTruststore);
+
+        SSLContext cl_sslCtx = SSLContext.getInstance("TLS");
+
+        cl_sslCtx.init(cl_kmf.getKeyManagers(), cl_tmf.getTrustManagers(), null);
+
+        clientSSLCtx = cl_sslCtx;
     }
 
     /*
@@ -226,14 +243,14 @@ public class SSLEngineSimpleDemo {
          * Configure the serverEngine to act as a server in the SSL/TLS
          * handshake.  Also, require SSL client authentication.
          */
-        serverEngine = sslc.createSSLEngine();
+        serverEngine = serverSSLCtx.createSSLEngine();
         serverEngine.setUseClientMode(false);
         serverEngine.setNeedClientAuth(true);
 
         /*
          * Similar to above, but using client mode instead.
          */
-        clientEngine = sslc.createSSLEngine("client", 80);
+        clientEngine = clientSSLCtx.createSSLEngine("client", 80);
         clientEngine.setUseClientMode(true);
     }
 
