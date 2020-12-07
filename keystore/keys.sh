@@ -14,11 +14,28 @@ CLIENTCERT="client.cer"
 
 keytool -genkeypair -keyalg RSA -keysize 2048 -alias $SERVERALIAS -dname "CN=server_out,O=Server,C=RU" -ext \
 "SAN:c=DNS:localhost,IP:127.0.0.1" -validity 3650 -keystore $SERVERSTORE -storepass $PASS -keypass $PASS \
--deststoretype pkcs12
+-deststoretype jks
+
+keytool -importkeystore \
+    -srckeystore $SERVERSTORE \
+    -destkeystore server.p12 \
+    -deststoretype PKCS12 \
+    -srcalias $SERVERALIAS \
+    -deststorepass $PASS \
+    -destkeypass $PASS
 
 keytool -genkeypair -keyalg RSA -keysize 2048 -alias $CLIENTALIAS -dname "CN=client_out,O=Client,C=RU" \
  -validity 3650 -keystore $CLIENTSTORE -storepass $PASS -keypass $PASS \
--deststoretype pkcs12
+-deststoretype jks \
+
+
+keytool -importkeystore \
+    -srckeystore $CLIENTSTORE \
+    -destkeystore client.p12 \
+    -deststoretype PKCS12 \
+    -srcalias $CLIENTALIAS \
+    -deststorepass $PASS \
+    -destkeypass $PASS
 
 keytool -exportcert -keystore $SERVERSTORE -storepass $PASS -alias $SERVERALIAS \
  -rfc -file $SERVERCERT
