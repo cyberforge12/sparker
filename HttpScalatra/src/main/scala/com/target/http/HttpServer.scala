@@ -1,6 +1,7 @@
 package com.target.http
 import com.target.http.Main.{certLocation, conn_st, servTrustLocation}
 
+import com.target.http.WebService
 import javax.servlet.Servlet
 import javax.net.ssl
 import org.eclipse.jetty.server.{Connector, HttpConfiguration, HttpConnectionFactory, SecureRequestCustomizer, Server, ServerConnector, SslConnectionFactory}
@@ -35,8 +36,9 @@ object HttpServer {
     serverSocket.setNeedClientAuth(true)
     while (true) {
       val socket = serverSocket.accept()
-      val bufferSource = fromInputStream(socket.getInputStream)
-      println(bufferSource.mkString)
+      val bufferSource = fromInputStream(socket.getInputStream).mkString
+      val webSr = new WebService
+      if (bufferSource(0).toString.equals("$")) webSr.writeDB(bufferSource.substring(1))
     }
   }
 
