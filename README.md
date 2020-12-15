@@ -12,13 +12,9 @@ first build - then run
 
 table config - WebService.scala bottom of the file
 
-## Working with AVRO
+## Генерация ключей
 
-http://avro.apache.org/docs/current/gettingstartedjava.html
-
-https://spark.apache.org/docs/latest/sql-data-sources-avro.html
-
-
+Запустить keystore/keys.sh
 
 ###Задача
 
